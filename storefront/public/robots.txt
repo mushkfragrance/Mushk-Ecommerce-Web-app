@@ -1,0 +1,15 @@
+# Mushk Fragrance storefront
+User-agent: *
+Allow: /
+
+# Disallow account / checkout flows from indexing
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-success
+Disallow: /account
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /wishlist
+
+Sitemap: https://www.mushkfragrance.com/sitemap.xml

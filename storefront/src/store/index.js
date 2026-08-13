@@ -1,0 +1,163 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { getVariantPrice } from '../lib/format'
+import { settings } from '../data/content'
+
+export const useCartStore = create(
+  persist(
+    (set, get) => ({
+      items: [],
+      promoCode: null,
+
+      addItem: ({ product, variant, quantity = 1 }) => {
+        const items = [...get().items]
+        const existingIndex = items.findIndex(
+          (item) => item.productId === product.id && item.size === variant.size,
+        )
+
+        if (existingIndex >= 0) {
+          const nextQty = Math.min(
+            items[existingIndex].quantity + quantity,
+            variant.stock || 99,
+          )
+          items[existingIndex] = { ...items[existingIndex], quantity: nextQty }
+        } else {
+          items.push({
+            key: `${product.id}-${variant.size}`,
+            productId: product.id,
+            slug: product.slug,
+            name: product.name,
+            image: product.images[0],
+            size: variant.size,
+            sku: variant.sku,
+            price: getVariantPrice(variant),
+            compareAtPrice: variant.compareAtPrice,
+            quantity,
+            stock: variant.stock,
+          })
+        }
+
+        set({ items })
+      },
+
+      removeItem: (key) => {
+        set({ items: get().items.filter((item) => item.key !== key) })
+      },
+
+      updateQuantity: (key, quantity) => {
+        set({
+          items: get().items.map((item) =>
+            item.key === key
+              ? { ...item, quantity: Math.max(1, Math.min(quantity, item.stock || 99)) }
+              : item,
+          ),
+        })
+      },
+
+      clearCart: () => set({ items: [], promoCode: null }),
+
+      applyPromo: (code) => {
+        const normalized = String(code || '')
+          .trim()
+          .toUpperCase()
+        const promo = settings.promoCodes[normalized]
+        if (!promo) return { ok: false, message: 'Invalid promo code' }
+        set({ promoCode: { code: normalized, ...promo } })
+        return { ok: true, message: promo.label }
+      },
+
+      clearPromo: () => set({ promoCode: null }),
+
+      getSubtotal: () =>
+        get().items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+
+      getDiscount: () => {
+        const subtotal = get().getSubtotal()
+        const promo = get().promoCode
+        if (!promo || promo.type !== 'percent') return 0
+        return Math.round((subtotal * promo.value) / 100)
+      },
+
+      getShipping: (cityFee = settings.defaultShippingFee) => {
+        const subtotal = get().getSubtotal()
+        const promo = get().promoCode
+        if (promo?.type === 'shipping') return 0
+        if (subtotal >= settings.freeShippingThreshold) return 0
+        return cityFee
+      },
+
+      getTotal: (cityFee) => {
+        const subtotal = get().getSubtotal()
+        const discount = get().getDiscount()
+        const shipping = get().getShipping(cityFee)
+        return Math.max(0, subtotal - discount + shipping)
+      },
+
+      getItemCount: () => get().items.reduce((sum, item) => sum + item.quantity, 0),
+    }),
+    { name: 'mushk-cart' },
+  ),
+)
+
+export const useWishlistStore = create(
+  persist(
+    (set, get) => ({
+      ids: [],
+      toggle: (productId) => {
+        const ids = get().ids
+        if (ids.includes(productId)) {
+          set({ ids: ids.filter((id) => id !== productId) })
+          return false
+        }
+        set({ ids: [...ids, productId] })
+        return true
+      },
+      has: (productId) => get().ids.includes(productId),
+      remove: (productId) => set({ ids: get().ids.filter((id) => id !== productId) }),
+      clear: () => set({ ids: [] }),
+    }),
+    { name: 'mushk-wishlist' },
+  ),
+)
+
+export const useAuthStore = create(
+  persist(
+    (set, get) => ({
+      user: null,
+      login: ({ email, name }) => {
+        set({
+          user: {
+            id: 'demo-user',
+            name: name || email.split('@')[0],
+            email,
+          },
+        })
+      },
+      register: ({ name, email }) => {
+        set({
+          user: {
+            id: 'demo-user',
+            name,
+            email,
+          },
+        })
+      },
+      logout: () => set({ user: null }),
+      isAuthenticated: () => Boolean(get().user),
+    }),
+    { name: 'mushk-auth' },
+  ),
+)
+
+export const useRecentlyViewedStore = create(
+  persist(
+    (set, get) => ({
+      ids: [],
+      add: (productId) => {
+        const next = [productId, ...get().ids.filter((id) => id !== productId)].slice(0, 8)
+        set({ ids: next })
+      },
+    }),
+    { name: 'mushk-recent' },
+  ),
+)
