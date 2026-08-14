@@ -29,12 +29,13 @@ DNS via Hostinger · Database via MongoDB Atlas.
 
 ```bash
 cd server
-cp .env.example .env   # set MONGODB_URI
+cp .env.example .env   # set MONGODB_URI to your Atlas connection string
 npm install
-npm run seed:admin
-npm run seed:demo      # optional demo catalog
+npm run seed:admin     # owner login only — catalog stays empty
 npm run dev
 ```
+
+Do **not** run `npm run seed:demo` against Atlas. The store starts from scratch; add real products in admin. `seed:demo` is blocked on Atlas/production unless `ALLOW_DEMO_SEED=true` (throwaway local DB only).
 
 Health: http://localhost:5000/api/health
 
@@ -103,4 +104,4 @@ From the admin panel the owner can manage real catalog data:
 
 ## Notes
 
-Do not push or deploy without explicit approval. After Phase 5, remaining launch work is real product images/content, Cloudinary keys, and the actual deploy when you request it.
+Do not push or deploy without explicit approval. After Phase 5, remaining launch work is real product images/content, Cloudinary keys, and the actual deploy when you request it. Atlas stays empty of mock catalog — seed the owner only, then add real products in admin.

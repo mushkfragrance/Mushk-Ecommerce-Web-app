@@ -7,8 +7,9 @@ Use this before every production deploy. Mark each item after verifying on the t
 - [ ] API running (`server` → `npm run start` or Railway health OK)
 - [ ] Storefront pointed at live API (`VITE_API_URL`)
 - [ ] Admin pointed at live API
-- [ ] MongoDB Atlas (or local) reachable
-- [ ] Owner admin seeded (`npm run seed:admin`)
+- [ ] MongoDB Atlas reachable (`MONGODB_URI` on the API)
+- [ ] Owner admin seeded (`npm run seed:admin` only — do not `seed:demo` on Atlas)
+- [ ] Catalog starts empty until the owner adds real products in admin
 
 ## Storefront — catalog & SEO
 

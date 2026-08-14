@@ -1,4 +1,6 @@
+const { env } = require('../config/env');
 const { connectDB } = require('../config/db');
+const { shouldBlockDemoSeed } = require('../utils/mongoTarget');
 const Category = require('../models/Category');
 const FragranceFamily = require('../models/FragranceFamily');
 const Product = require('../models/Product');
@@ -126,6 +128,13 @@ const products = [
 ];
 
 async function seedDemo() {
+  if (shouldBlockDemoSeed(process.env.MONGODB_URI, env.NODE_ENV)) {
+    console.error('Refusing to seed demo catalog into Atlas or production.');
+    console.error('Keep the real database empty except the owner admin (npm run seed:admin).');
+    console.error('Disposable local DB only: set ALLOW_DEMO_SEED=true');
+    process.exit(1);
+  }
+
   await connectDB();
   await getSettings();
 

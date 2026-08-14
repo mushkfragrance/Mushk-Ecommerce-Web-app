@@ -33,11 +33,12 @@ On Windows PowerShell, use a fixed folder name instead of `date` if preferred.
 
 ```bash
 cd server
-npm run seed:admin   # creates/updates owner from ADMIN_* env — safe to re-run
-npm run seed:demo    # demo catalog — avoid on production with real data
+npm run seed:admin   # owner from ADMIN_* env — the only seed allowed on Atlas
 ```
 
 `seed:admin` does **not** open public registration. There is no public admin signup route.
+
+Do **not** run `npm run seed:demo` against Atlas. Production starts empty (no mock products, coupons, or banners). `seed:demo` is blocked on Atlas/production unless `ALLOW_DEMO_SEED=true` on a throwaway local database.
 
 ## After restore
 

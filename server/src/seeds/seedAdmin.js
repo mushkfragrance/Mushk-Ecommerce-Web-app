@@ -1,9 +1,12 @@
 const { connectDB } = require('../config/db');
 const { env } = require('../config/env');
+const { describeMongoTarget } = require('../utils/mongoTarget');
 const AdminUser = require('../models/AdminUser');
 
 async function seedAdmin() {
   await connectDB();
+  console.log(`MongoDB target: ${describeMongoTarget(process.env.MONGODB_URI)}`);
+  console.log('Catalog left empty — do not run npm run seed:demo against Atlas.');
 
   const existing = await AdminUser.findOne({ email: env.ADMIN_EMAIL.toLowerCase() });
   if (existing) {

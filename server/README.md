@@ -11,7 +11,7 @@ cd server
 cp .env.example .env
 ```
 
-2. Set `MONGODB_URI` to your MongoDB Atlas connection string.
+2. Set `MONGODB_URI` to your MongoDB Atlas connection string (real DB).
 
 3. Change JWT secrets and `ADMIN_PASSWORD`.
 
@@ -20,9 +20,10 @@ cp .env.example .env
 ```bash
 npm install
 npm run seed:admin
-npm run seed:demo
 npm run dev
 ```
+
+Do **not** run `npm run seed:demo` against Atlas. The catalog stays empty until the owner adds real products in admin.
 
 API base: `http://localhost:5000/api`  
 Health: `http://localhost:5000/api/health`
@@ -106,8 +107,8 @@ See [../docs/OWNER_CAPABILITIES.md](../docs/OWNER_CAPABILITIES.md) for size stan
 ## Seed & backup
 
 ```bash
-npm run seed:admin   # owner from ADMIN_* env
-npm run seed:demo    # demo catalog � avoid on live data
+npm run seed:admin   # owner from ADMIN_* env — only seed allowed on Atlas
+# npm run seed:demo  # blocked on Atlas/production; throwaway local DB only
 ```
 
 See [../docs/BACKUP.md](../docs/BACKUP.md) and [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md).
