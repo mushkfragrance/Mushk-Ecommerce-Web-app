@@ -51,7 +51,7 @@ const navSections = [
       { to: '/orders', label: 'Orders', icon: ShoppingCart },
       { to: '/customers', label: 'Customers', icon: Users },
       { to: '/coupons', label: 'Coupons', icon: TicketPercent },
-      { to: '/campaigns', label: 'Campaigns', icon: Megaphone },
+      { to: '/campaigns', label: 'Merchandising', icon: Megaphone },
     ],
   },
   {
@@ -166,7 +166,7 @@ export default function AdminLayout() {
             </button>
             <div>
               <p className="text-sm font-medium text-ink">Mushk Fragrance Admin</p>
-              <p className="text-xs text-muted">Prototype · mock data only</p>
+              <p className="text-xs text-muted">Live catalog and orders</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
