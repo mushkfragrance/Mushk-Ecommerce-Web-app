@@ -124,19 +124,19 @@ export const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      login: ({ email, name }) => {
+      login: ({ email, name, id }) => {
         set({
           user: {
-            id: 'demo-user',
+            id: id || email,
             name: name || email.split('@')[0],
             email,
           },
         })
       },
-      register: ({ name, email }) => {
+      register: ({ name, email, id }) => {
         set({
           user: {
-            id: 'demo-user',
+            id: id || email,
             name,
             email,
           },

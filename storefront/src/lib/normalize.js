@@ -24,3 +24,34 @@ export function audienceLabel(gender) {
   if (gender === 'unisex') return 'Unisex'
   return gender
 }
+
+export function normalizeOrder(order) {
+  if (!order) return null
+  const created = order.createdAt ? new Date(order.createdAt) : null
+  return {
+    id: order.orderNumber || order._id || order.id,
+    mongoId: order._id || order.id,
+    date: created ? created.toLocaleDateString() : '',
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
+    total: order.total,
+    subtotal: order.subtotal,
+    discount: order.discount,
+    shipping: order.shipping,
+    items: (order.items || []).map((item) => ({
+      name: item.name,
+      size: item.size,
+      qty: item.qty,
+      price: item.price,
+    })),
+    shippingAddress: {
+      name: order.customerSnapshot?.name || '',
+      phone: order.customerSnapshot?.phone || '',
+      address: order.shippingAddress?.address || '',
+      city: order.shippingAddress?.city || '',
+      area: order.shippingAddress?.area || '',
+      notes: order.shippingAddress?.notes || '',
+    },
+  }
+}

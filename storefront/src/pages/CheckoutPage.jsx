@@ -96,7 +96,7 @@ export default function CheckoutPage() {
     setSubmitting(true)
     try {
       const payload = {
-        guest: form.guest,
+        guest: !user,
         customer: {
           name: form.fullName,
           email: form.email,

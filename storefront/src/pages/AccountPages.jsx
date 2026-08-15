@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import PageHero from '../components/ui/PageHero'
@@ -6,8 +6,9 @@ import Breadcrumbs from '../components/ui/Breadcrumbs'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
 import EmptyState from '../components/ui/EmptyState'
-import { sampleOrders } from '../data/content'
 import { formatPrice } from '../lib/format'
+import { normalizeOrder } from '../lib/normalize'
+import { customerAuthApi, getErrorMessage } from '../lib/services'
 import { useAuthStore } from '../store'
 import { Package } from 'lucide-react'
 
@@ -22,45 +23,93 @@ function RequireAuth({ children }) {
   return children
 }
 
-export function AccountPage() {
-  const user = useAuthStore((s) => s.user)
+function useMyOrders() {
+  const logout = useAuthStore((s) => s.logout)
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    customerAuthApi
+      .myOrders()
+      .then(({ data }) => {
+        if (alive) setOrders((data.data || []).map(normalizeOrder))
+      })
+      .catch((error) => {
+        if (error?.response?.status === 401) {
+          logout()
+          return
+        }
+        toast.error(getErrorMessage(error, 'Could not load orders'))
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [logout])
+
+  return { orders, loading }
+}
+
+function AccountNav({ active }) {
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await customerAuthApi.logout()
+    } catch {
+      /* still clear local session */
+    }
+    logout()
+    toast.success('Signed out')
+    navigate('/')
+  }
+
+  return (
+    <aside className="border border-border bg-charcoal p-5">
+      <h2 className="font-display text-xl text-ivory">Dashboard</h2>
+      <nav className="mt-4 space-y-2 text-sm">
+        <Link
+          to="/account"
+          className={active === 'overview' ? 'block text-gold-bright' : 'block text-muted hover:text-gold-bright'}
+        >
+          Overview
+        </Link>
+        <Link
+          to="/account/orders"
+          className={active === 'orders' ? 'block text-gold-bright' : 'block text-muted hover:text-gold-bright'}
+        >
+          Order history
+        </Link>
+        <Link to="/wishlist" className="block text-muted hover:text-gold-bright">
+          Wishlist
+        </Link>
+        <button type="button" className="block text-muted hover:text-gold-bright" onClick={handleLogout}>
+          Logout
+        </button>
+      </nav>
+    </aside>
+  )
+}
+
+export function AccountPage() {
+  const user = useAuthStore((s) => s.user)
+  const { orders, loading } = useMyOrders()
+  const recent = orders.slice(0, 2)
 
   return (
     <RequireAuth>
       <PageHero
         eyebrow="Account"
         title={`Hello, ${user?.name}`}
-        description="Manage your profile and review recent orders. Auth is simulated in Phase 1."
+        description="Manage your profile and review recent orders."
         crumbs={<Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Account' }]} />}
       />
       <div className="container-site section-pad grid gap-6 py-10 md:grid-cols-3 md:py-14">
-        <aside className="border border-border bg-charcoal p-5">
-          <h2 className="font-display text-xl text-ivory">Dashboard</h2>
-          <nav className="mt-4 space-y-2 text-sm">
-            <Link to="/account" className="block text-gold-bright">
-              Overview
-            </Link>
-            <Link to="/account/orders" className="block text-muted hover:text-gold-bright">
-              Order history
-            </Link>
-            <Link to="/wishlist" className="block text-muted hover:text-gold-bright">
-              Wishlist
-            </Link>
-            <button
-              type="button"
-              className="block text-muted hover:text-gold-bright"
-              onClick={() => {
-                logout()
-                toast.success('Signed out')
-                navigate('/')
-              }}
-            >
-              Logout
-            </button>
-          </nav>
-        </aside>
+        <AccountNav active="overview" />
         <div className="space-y-5 md:col-span-2">
           <section className="border border-border p-5">
             <h3 className="font-display text-xl text-ivory">Profile</h3>
@@ -82,23 +131,31 @@ export function AccountPage() {
                 View all
               </Link>
             </div>
-            <ul className="mt-4 space-y-3">
-              {sampleOrders.slice(0, 2).map((order) => (
-                <li
-                  key={order.id}
-                  className="flex items-center justify-between gap-3 border border-border p-3 text-sm"
-                >
-                  <div>
-                    <p className="text-ivory">{order.id}</p>
-                    <p className="text-muted">{order.date}</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge>{order.status}</Badge>
-                    <p className="mt-2 text-gold-bright">{formatPrice(order.total)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {loading ? (
+              <p className="mt-4 text-sm text-muted">Loading orders…</p>
+            ) : recent.length ? (
+              <ul className="mt-4 space-y-3">
+                {recent.map((order) => (
+                  <li key={order.id}>
+                    <Link
+                      to={`/account/orders/${order.id}`}
+                      className="flex items-center justify-between gap-3 border border-border p-3 text-sm hover:border-gold/50"
+                    >
+                      <div>
+                        <p className="text-ivory">{order.id}</p>
+                        <p className="text-muted">{order.date}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge>{order.status}</Badge>
+                        <p className="mt-2 text-gold-bright">{formatPrice(order.total)}</p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-muted">No orders yet. Shop while signed in to see them here.</p>
+            )}
           </section>
         </div>
       </div>
@@ -107,12 +164,14 @@ export function AccountPage() {
 }
 
 export function OrdersPage() {
+  const { orders, loading } = useMyOrders()
+
   return (
     <RequireAuth>
       <PageHero
         eyebrow="Orders"
         title="Order history"
-        description="Sample orders for the account dashboard prototype."
+        description="Orders placed while you were signed in."
         crumbs={
           <Breadcrumbs
             items={[
@@ -124,9 +183,11 @@ export function OrdersPage() {
         }
       />
       <div className="container-site section-pad py-10 md:py-14">
-        {sampleOrders.length ? (
+        {loading ? (
+          <p className="text-sm text-muted">Loading orders…</p>
+        ) : orders.length ? (
           <div className="space-y-4">
-            {sampleOrders.map((order) => (
+            {orders.map((order) => (
               <Link
                 key={order.id}
                 to={`/account/orders/${order.id}`}
@@ -149,7 +210,7 @@ export function OrdersPage() {
           <EmptyState
             icon={Package}
             title="No orders yet"
-            description="When you place an order, it will appear here."
+            description="When you place an order while signed in, it will appear here."
             actionLabel="Shop now"
             actionTo="/shop"
           />
@@ -161,7 +222,16 @@ export function OrdersPage() {
 
 export function OrderDetailsPage() {
   const { id } = useParams()
-  const order = sampleOrders.find((o) => o.id === id)
+  const { orders, loading } = useMyOrders()
+  const order = orders.find((o) => o.id === id)
+
+  if (loading) {
+    return (
+      <RequireAuth>
+        <div className="container-site section-pad py-16 text-sm text-muted">Loading order…</div>
+      </RequireAuth>
+    )
+  }
 
   if (!order) {
     return (
@@ -170,7 +240,7 @@ export function OrderDetailsPage() {
           <EmptyState
             icon={Package}
             title="Order not found"
-            description="We could not find that order in the prototype sample data."
+            description="We could not find that order on this account."
             actionLabel="Back to orders"
             actionTo="/account/orders"
           />

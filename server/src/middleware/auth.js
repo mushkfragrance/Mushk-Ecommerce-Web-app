@@ -55,16 +55,31 @@ function requireCustomer(req, res, next) {
   return next();
 }
 
-function optionalAuth(req, res, next) {
+async function optionalAuth(req, res, next) {
   const token = getToken(req);
   if (!token) return next();
 
   try {
     const decoded = verifyAccessToken(token);
     req.auth = decoded;
+
+    if (decoded.role === 'customer') {
+      const customer = await Customer.findById(decoded.sub);
+      if (customer?.isActive) {
+        req.user = customer;
+        req.userType = 'customer';
+      }
+    } else {
+      const admin = await AdminUser.findById(decoded.sub);
+      if (admin?.isActive) {
+        req.user = admin;
+        req.userType = 'admin';
+      }
+    }
   } catch {
     // ignore invalid optional token
   }
+
   return next();
 }
 
