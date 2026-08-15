@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import Badge from '../ui/Badge'
 import StarRating from '../ui/StarRating'
 import { formatPrice, getLowestPrice, discountPercent, getVariantPrice } from '../../lib/format'
+import { cloudinaryUrl } from '../../lib/cloudinary'
 import { useWishlistStore } from '../../store'
 
 export default function ProductCard({ product, onQuickView }) {
@@ -31,7 +32,7 @@ export default function ProductCard({ product, onQuickView }) {
       <Link to={`/product/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden bg-elevated">
         {!imgLoaded ? <div className="absolute inset-0 animate-pulse bg-elevated" /> : null}
         <img
-          src={product.images[0]}
+          src={cloudinaryUrl(product.images[0], { width: 600 })}
           alt={`${product.name} by Mushk Fragrance`}
           loading="lazy"
           width={600}

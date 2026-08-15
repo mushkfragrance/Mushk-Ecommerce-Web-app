@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { SectionHeader } from '../ui/PageHero'
+import { cloudinaryUrl } from '../../lib/cloudinary'
 
 export default function CategoriesSection({ homepage, categories = [] }) {
   const tiles = [
@@ -47,10 +48,13 @@ export default function CategoriesSection({ homepage, categories = [] }) {
             >
               {tile.image ? (
                 <img
-                  src={tile.image}
+                  src={cloudinaryUrl(tile.image, { width: 720 })}
                   alt={tile.name}
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
+                  decoding="async"
+                  width={720}
+                  height={900}
                 />
               ) : (
                 <div className="h-full w-full bg-charcoal" aria-hidden="true" />

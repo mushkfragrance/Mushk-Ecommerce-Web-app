@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion'
 import Button from '../ui/Button'
 import SocialLinks from '../layout/SocialLinks'
+import { cloudinarySrcSet, cloudinaryUrl } from '../../lib/cloudinary'
 
 const defaultCopy = {
   title: 'Mushk Fragrance',
@@ -26,12 +26,15 @@ export default function HeroSection({ homepage }) {
       <div className="absolute inset-0 overflow-hidden">
         {image ? (
           <img
-            src={image}
+            src={cloudinaryUrl(image, { width: 1080 })}
+            srcSet={cloudinarySrcSet(image, [640, 960, 1280, 1600])}
+            sizes="100vw"
             alt=""
             className="h-full w-full object-cover object-center"
             width={1920}
             height={1080}
             fetchPriority="high"
+            decoding="async"
           />
         ) : (
           <div className="h-full w-full bg-charcoal" aria-hidden="true" />
@@ -41,12 +44,7 @@ export default function HeroSection({ homepage }) {
       </div>
 
       <div className="container-site section-pad relative flex min-h-[calc(100dvh-8.5rem)] flex-col items-center justify-start pt-8 pb-14 sm:min-h-[calc(100dvh-9rem)] sm:pt-10 sm:pb-16 md:min-h-[calc(100dvh-8rem)] md:justify-start md:pt-12 md:pb-16 lg:pt-16">
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: 'easeOut' }}
-          className="mx-auto flex w-full max-w-3xl flex-col items-center px-1 text-center"
-        >
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center px-1 text-center">
           <h1 className="font-display text-[1.85rem] leading-tight text-gold text-balance xs:text-3xl sm:text-4xl md:text-6xl">
             Mushk Fragrance
           </h1>
@@ -73,7 +71,7 @@ export default function HeroSection({ homepage }) {
           </div>
           <p className="mt-5 text-[10px] uppercase tracking-[0.28em] text-gold sm:mt-6">Follow Mushk</p>
           <SocialLinks tone="hero" className="mt-3" />
-        </motion.div>
+        </div>
       </div>
     </section>
   )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { cloudinaryUrl } from '../../lib/cloudinary'
 
 export default function ProductGallery({ images = [], name }) {
   const [active, setActive] = useState(0)
@@ -16,7 +17,7 @@ export default function ProductGallery({ images = [], name }) {
         aria-label={`Enlarge image of ${name}`}
       >
         <img
-          src={images[active]}
+          src={cloudinaryUrl(images[active], { width: 900 })}
           alt={`${name} by Mushk Fragrance`}
           className="h-full w-full object-cover object-center"
           width={800}
@@ -39,7 +40,7 @@ export default function ProductGallery({ images = [], name }) {
             }`}
             aria-label={`Show image ${index + 1}`}
           >
-            <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+            <img src={cloudinaryUrl(src, { width: 160 })} alt="" className="h-full w-full object-cover" loading="lazy" />
           </button>
         ))}
       </div>
@@ -62,7 +63,7 @@ export default function ProductGallery({ images = [], name }) {
             <X size={18} />
           </button>
           <img
-            src={images[active]}
+            src={cloudinaryUrl(images[active], { width: 1400 })}
             alt={`${name} enlarged`}
             className="relative z-10 max-h-[88dvh] max-w-full object-contain"
           />

@@ -7,6 +7,7 @@ import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import StarRating from '../ui/StarRating'
 import { formatPrice, getVariantPrice, discountPercent } from '../../lib/format'
+import { cloudinaryUrl } from '../../lib/cloudinary'
 import { useCartStore, useWishlistStore } from '../../store'
 
 export default function QuickViewModal({ product, open, onClose }) {
@@ -42,7 +43,11 @@ export default function QuickViewModal({ product, open, onClose }) {
     <Modal open={open} onClose={onClose} title={product.name} wide>
       <div className="grid gap-6 md:grid-cols-2">
         <div className="aspect-[4/5] overflow-hidden border border-border bg-elevated">
-          <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
+          <img
+            src={cloudinaryUrl(product.images[0], { width: 720 })}
+            alt={product.name}
+            className="h-full w-full object-cover"
+          />
         </div>
         <div>
           <div className="mb-3 flex flex-wrap gap-2">
