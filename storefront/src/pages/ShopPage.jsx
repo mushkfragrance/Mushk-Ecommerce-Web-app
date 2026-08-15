@@ -117,7 +117,7 @@ export default function ShopPage({ collection: collectionProp }) {
     [filters, meta.filters.collection],
   )
 
-  const { products, meta: apiMeta, loading, source } = useProducts(apiParams)
+  const { products, meta: apiMeta, loading } = useProducts(apiParams)
 
   // Client-side size filter (API may not filter sizes yet)
   const filtered = useMemo(() => {
@@ -175,7 +175,6 @@ export default function ShopPage({ collection: collectionProp }) {
           <p className="text-sm text-muted">
             Showing <span className="text-ivory">{pageData.total}</span> fragrance
             {pageData.total === 1 ? '' : 's'}
-            {source === 'mock' ? ' (offline mock fallback)' : ''}
           </p>
           <div className="flex w-full items-center gap-3 sm:w-auto">
             <button

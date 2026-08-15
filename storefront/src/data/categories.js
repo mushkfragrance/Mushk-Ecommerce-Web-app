@@ -4,24 +4,21 @@ export const categories = [
     name: "Men's",
     slug: 'men',
     description: 'Bold, woody, and amber compositions for evening presence.',
-    image:
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=900&q=80',
+    image: '',
   },
   {
     id: 'cat-women',
     name: "Women's",
     slug: 'women',
     description: 'Floral, musky, and soft oriental trails with lasting elegance.',
-    image:
-      'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=80',
+    image: '',
   },
   {
     id: 'cat-unisex',
     name: 'Unisex',
     slug: 'unisex',
     description: 'Shared signatures — clean, resinous, and quietly powerful.',
-    image:
-      'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=900&q=80',
+    image: '',
   },
 ]
 

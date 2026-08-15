@@ -5,8 +5,7 @@ export const banners = [
     subtitle: 'Discover the Mushk Fragrance collection — refined perfume oils and eau de parfum in black and gold.',
     ctaPrimary: { label: 'Shop All', href: '/shop' },
     ctaSecondary: { label: 'New Arrivals', href: '/shop/new-arrivals' },
-    image:
-      'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1800&q=80',
+    image: '',
   },
 ]
 
@@ -14,42 +13,10 @@ export const promoBanner = {
   title: 'Evening edit — up to 20% off selected bottles',
   subtitle: 'Limited seasonal reductions on Amber Night, Tobacco Gold, and Jasmine Veil.',
   cta: { label: 'Shop Sale', href: '/shop/sale' },
-  image:
-    'https://images.unsplash.com/photo-1619995745882-f4128ac82a69?auto=format&fit=crop&w=1600&q=80',
+  image: '',
 }
 
-export const galleryImages = [
-  {
-    id: 'g1',
-    alt: 'Gold perfume bottle on dark marble',
-    src: 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'g2',
-    alt: 'Perfume bottle with warm amber light',
-    src: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'g3',
-    alt: 'Minimal fragrance flat lay',
-    src: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'g4',
-    alt: 'Dark bottle and gold cap detail',
-    src: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'g5',
-    alt: 'Fragrance ritual on vanity',
-    src: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59db9?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'g6',
-    alt: 'Luxury perfume bottle close-up',
-    src: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80',
-  },
-]
+export const galleryImages = []
 
 export const reviews = [
   {

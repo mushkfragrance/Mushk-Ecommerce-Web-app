@@ -11,12 +11,7 @@ export default function BrandStory() {
         viewport={{ once: true }}
         className="relative aspect-[4/5] overflow-hidden border border-border"
       >
-        <img
-          src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=1000&q=80"
-          alt="Mushk Fragrance brand story bottle"
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
+        <div className="h-full w-full bg-charcoal" aria-hidden="true" />
       </motion.div>
       <motion.div
         initial={{ opacity: 0, x: 20 }}

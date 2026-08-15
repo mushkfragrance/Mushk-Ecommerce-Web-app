@@ -4,13 +4,14 @@ import PageHero from '../components/ui/PageHero'
 import Breadcrumbs from '../components/ui/Breadcrumbs'
 import ProductGrid from '../components/product/ProductGrid'
 import EmptyState from '../components/ui/EmptyState'
-import { products } from '../data/products'
 import { useWishlistStore } from '../store'
+import { useProducts } from '../hooks/useCatalog'
 
 export default function WishlistPage() {
   const ids = useWishlistStore((s) => s.ids)
   const remove = useWishlistStore((s) => s.remove)
-  const list = products.filter((p) => ids.includes(p.id))
+  const { products, loading } = useProducts({ limit: 48 })
+  const list = products.filter((p) => ids.includes(p.id) || ids.includes(p._id))
 
   return (
     <>
@@ -21,7 +22,9 @@ export default function WishlistPage() {
         crumbs={<Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Wishlist' }]} />}
       />
       <div className="container-site section-pad py-10 md:py-14">
-        {list.length ? (
+        {loading ? (
+          <p className="text-sm text-muted">Loading wishlist…</p>
+        ) : list.length ? (
           <>
             <div className="mb-6 flex justify-end">
               <button

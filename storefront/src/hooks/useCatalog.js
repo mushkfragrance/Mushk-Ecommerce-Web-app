@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { storeApi, getErrorMessage } from '../lib/services'
 import { normalizeProduct } from '../lib/normalize'
-import { products as mockProducts } from '../data/products'
 
 export function useProducts(params = {}, { enabled = true } = {}) {
   const [products, setProducts] = useState([])
   const [meta, setMeta] = useState(null)
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState(null)
-  const [source, setSource] = useState('api')
 
   const key = JSON.stringify(params)
 
@@ -20,12 +18,9 @@ export function useProducts(params = {}, { enabled = true } = {}) {
       const { data } = await storeApi.products(params)
       setProducts((data.data || []).map(normalizeProduct))
       setMeta(data.meta || null)
-      setSource('api')
     } catch (err) {
-      // Fallback keeps demos usable if API is down
-      setSource('mock')
       setError(getErrorMessage(err))
-      setProducts(mockProducts.map(normalizeProduct))
+      setProducts([])
       setMeta(null)
     } finally {
       setLoading(false)
@@ -36,7 +31,7 @@ export function useProducts(params = {}, { enabled = true } = {}) {
     load()
   }, [load])
 
-  return { products, meta, loading, error, source, reload: load }
+  return { products, meta, loading, error, reload: load }
 }
 
 export function useProductBySlug(slug) {
@@ -53,10 +48,9 @@ export function useProductBySlug(slug) {
       .then(({ data }) => {
         if (alive) setProduct(normalizeProduct(data.data))
       })
-      .catch(async (err) => {
-        const fallback = mockProducts.find((p) => p.slug === slug)
+      .catch((err) => {
         if (alive) {
-          setProduct(fallback ? normalizeProduct(fallback) : null)
+          setProduct(null)
           setError(getErrorMessage(err))
         }
       })

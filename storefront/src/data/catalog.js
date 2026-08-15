@@ -1,4 +1,3 @@
-import { products } from './products'
 import { getLowestPrice, getVariantPrice, discountPercent } from '../lib/format'
 
 export function filterProducts(list, filters = {}) {
@@ -94,5 +93,3 @@ export function paginate(list, page = 1, perPage = 9) {
     perPage,
   }
 }
-
-export { products }

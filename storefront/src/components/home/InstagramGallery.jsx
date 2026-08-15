@@ -25,12 +25,16 @@ export default function InstagramGallery() {
             transition={{ delay: index * 0.05 }}
             className="group relative aspect-square overflow-hidden border border-border"
           >
-            <img
-              src={image.src}
-              alt={image.alt}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
-            />
+            {image.src ? (
+              <img
+                src={image.src}
+                alt={image.alt}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            ) : (
+              <div className="h-full w-full bg-charcoal" aria-hidden="true" />
+            )}
           </motion.a>
         ))}
       </div>

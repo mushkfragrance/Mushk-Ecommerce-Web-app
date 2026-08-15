@@ -5,12 +5,16 @@ import { promoBanner } from '../../data/content'
 export default function PromoBanner() {
   return (
     <section className="relative overflow-hidden border-y border-border">
-      <img
-        src={promoBanner.image}
-        alt="Seasonal fragrance promotion"
-        className="absolute inset-0 h-full w-full object-cover"
-        loading="lazy"
-      />
+      {promoBanner.image ? (
+        <img
+          src={promoBanner.image}
+          alt="Seasonal fragrance promotion"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-charcoal" aria-hidden="true" />
+      )}
       <div className="absolute inset-0 bg-ink/75" />
       <div className="container-site section-pad relative py-16 md:py-24">
         <motion.div
