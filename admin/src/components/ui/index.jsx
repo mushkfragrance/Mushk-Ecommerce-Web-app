@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+
 export function Button({
   children,
   variant = 'primary',
@@ -29,14 +32,34 @@ export function Button({
   )
 }
 
-export function Input({ label, error, className = '', ...props }) {
+export function Input({ label, error, className = '', type = 'text', ...props }) {
+  const [visible, setVisible] = useState(false)
+  const isPassword = type === 'password'
+  const inputType = isPassword ? (visible ? 'text' : 'password') : type
+
   return (
     <label className="block text-sm">
       {label ? <span className="mb-1.5 block font-medium text-slate">{label}</span> : null}
-      <input
-        className={`w-full rounded-md border border-line bg-panel px-3 py-2 text-ink placeholder:text-muted focus:border-gold ${error ? 'border-danger' : ''} ${className}`}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          type={inputType}
+          className={`w-full rounded-md border border-line bg-panel px-3 py-2 text-ink placeholder:text-muted focus:border-gold ${
+            isPassword ? 'pr-10' : ''
+          } ${error ? 'border-danger' : ''} ${className}`}
+          {...props}
+        />
+        {isPassword ? (
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+            onClick={() => setVisible((v) => !v)}
+            aria-label={visible ? 'Hide password' : 'Show password'}
+            tabIndex={-1}
+          >
+            {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        ) : null}
+      </div>
       {error ? <span className="mt-1 block text-xs text-danger">{error}</span> : null}
     </label>
   )
