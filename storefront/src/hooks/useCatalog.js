@@ -91,16 +91,41 @@ export function useCategories() {
   return categories
 }
 
-export function useHomepageMedia() {
-  const [homepage, setHomepage] = useState({
+const HOMEPAGE_CACHE_KEY = 'mushk-homepage-media'
+
+function emptyHomepage() {
+  return {
+    image: '',
     shopAllImage: '',
     bestSellersImage: '',
     showBestSellersSection: false,
     showNewArrivalsSection: false,
     showFeaturedSection: false,
-  })
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
+  }
+}
+
+function readHomepageCache() {
+  try {
+    const raw = sessionStorage.getItem(HOMEPAGE_CACHE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function writeHomepageCache(payload) {
+  try {
+    sessionStorage.setItem(HOMEPAGE_CACHE_KEY, JSON.stringify(payload))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+export function useHomepageMedia() {
+  const cached = typeof sessionStorage !== 'undefined' ? readHomepageCache() : null
+  const [homepage, setHomepage] = useState(cached?.homepage || emptyHomepage())
+  const [categories, setCategories] = useState(cached?.categories || [])
+  const [loading, setLoading] = useState(!cached?.homepage?.image)
 
   useEffect(() => {
     let alive = true
@@ -108,20 +133,22 @@ export function useHomepageMedia() {
       .homepage()
       .then(({ data }) => {
         if (!alive) return
-        setHomepage({
+        const nextHomepage = {
+          ...emptyHomepage(),
+          ...data.data?.homepage,
           shopAllImage: data.data?.homepage?.shopAllImage || '',
           bestSellersImage: data.data?.homepage?.bestSellersImage || '',
           showBestSellersSection: Boolean(data.data?.homepage?.showBestSellersSection),
           showNewArrivalsSection: Boolean(data.data?.homepage?.showNewArrivalsSection),
           showFeaturedSection: Boolean(data.data?.homepage?.showFeaturedSection),
-          ...data.data?.homepage,
-        })
-        setCategories(
-          (data.data?.categories || []).map((c) => ({
-            ...c,
-            id: c._id || c.id,
-          })),
-        )
+        }
+        const nextCategories = (data.data?.categories || []).map((c) => ({
+          ...c,
+          id: c._id || c.id,
+        }))
+        setHomepage(nextHomepage)
+        setCategories(nextCategories)
+        writeHomepageCache({ homepage: nextHomepage, categories: nextCategories })
       })
       .catch(() => {})
       .finally(() => {

@@ -12,7 +12,7 @@ import { useHomepageMedia } from '../hooks/useCatalog'
 
 export default function HomePage() {
   const [quickView, setQuickView] = useState(null)
-  const { homepage } = useHomepageMedia()
+  const { homepage, categories } = useHomepageMedia()
 
   return (
     <>
@@ -22,8 +22,8 @@ export default function HomePage() {
         jsonLd={organizationJsonLd()}
         jsonLdId="org-jsonld"
       />
-      <HeroSection />
-      <CategoriesSection />
+      <HeroSection homepage={homepage} />
+      <CategoriesSection homepage={homepage} categories={categories} />
       {homepage.showBestSellersSection ? (
         <ProductRail
           title="Best Sellers"
