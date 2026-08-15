@@ -86,15 +86,20 @@ function splitNotes(value) {
     .filter(Boolean)
 }
 
+function notesToText(value) {
+  if (Array.isArray(value)) return value.join(', ')
+  return String(value || '')
+}
+
 export function fromApiProduct(product) {
   return {
     ...product,
     id: product._id || product.id,
     image: product.images?.[0] || '',
     images: Array.isArray(product.images) ? product.images.filter(Boolean) : [],
-    topNotes: (product.topNotes || []).join(', '),
-    middleNotes: (product.middleNotes || []).join(', '),
-    baseNotes: (product.baseNotes || []).join(', '),
+    topNotes: notesToText(product.topNotes),
+    middleNotes: notesToText(product.middleNotes),
+    baseNotes: notesToText(product.baseNotes),
     variants: (product.variants || []).map((v) => ({
       ...v,
       compareAtPrice: v.compareAtPrice ?? '',

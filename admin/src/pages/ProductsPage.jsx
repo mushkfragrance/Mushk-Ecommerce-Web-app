@@ -94,12 +94,12 @@ export default function ProductsPage() {
   }
 
   const openEdit = (product) => {
-    setEditing(fromApiProduct(product))
+    setEditing({ ...product })
     setOpen(true)
   }
 
   const duplicateProduct = (product) => {
-    const copy = fromApiProduct(product)
+    const copy = { ...product }
     setEditing({
       ...copy,
       id: '',
