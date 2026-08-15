@@ -254,7 +254,7 @@ export default function ProductsPage() {
                       <Badge tone={product.status === 'active' ? 'success' : 'neutral'}>
                         {product.status}
                       </Badge>
-                      {product.bestSeller ? <Badge tone="info">Most popular</Badge> : null}
+                      {product.bestSeller ? <Badge tone="info">Best seller</Badge> : null}
                       {product.featured ? <Badge tone="gold">Featured</Badge> : null}
                       {product.newArrival ? <Badge tone="warning">New</Badge> : null}
                       {product.onSale ? <Badge tone="danger">Sale</Badge> : null}
@@ -375,7 +375,7 @@ function ProductFormModal({ open, product, onClose, onSave, saving }) {
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="inline-flex items-center gap-2">
             <input type="checkbox" {...register('bestSeller')} />
-            Most popular badge
+            Best seller
           </label>
           <label className="inline-flex items-center gap-2">
             <input type="checkbox" {...register('featured')} />
