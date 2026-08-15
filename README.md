@@ -13,6 +13,12 @@ docs/         Owner capabilities, E2E checklist, deploy & backup
 
 DNS via Hostinger · Database via MongoDB Atlas.
 
+## Live (platform URLs)
+
+- Storefront: https://mushk-ecommerce-web-app.vercel.app
+- Admin: https://mushk-ecommerce-web-app-t8pi.vercel.app
+- Custom frontend domain will be attached later.
+
 ## Phases (complete)
 
 | Phase | Focus |
