@@ -8,6 +8,7 @@ const { sendSuccess } = require('../utils/ApiResponse');
 const { ApiError } = require('../utils/ApiError');
 const { getPagination } = require('../utils/query');
 const { createOrder, updateOrderStatus, validateCoupon } = require('../services/orderService');
+const { getOrderSummary } = require('../services/analyticsService');
 const { logActivity } = require('../utils/activity');
 
 const placeOrder = asyncHandler(async (req, res) => {
@@ -63,6 +64,11 @@ const getOrder = asyncHandler(async (req, res) => {
 const myOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ customer: req.user._id }).sort({ createdAt: -1 });
   sendSuccess(res, { data: orders });
+});
+
+const orderSummary = asyncHandler(async (req, res) => {
+  const data = await getOrderSummary();
+  sendSuccess(res, { data });
 });
 
 const changeOrderStatus = asyncHandler(async (req, res) => {
@@ -195,6 +201,7 @@ module.exports = {
   listOrders,
   getOrder,
   myOrders,
+  orderSummary,
   changeOrderStatus,
   changePaymentStatus,
   listCustomers,

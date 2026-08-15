@@ -143,6 +143,40 @@ const patchFlags = asyncHandler(async (req, res) => {
   sendSuccess(res, { message: 'Product flags updated', data: product });
 });
 
+const setSoldOut = asyncHandler(async (req, res) => {
+  const soldOut = Boolean(req.body?.soldOut);
+  const product = await Product.findById(req.params.id);
+  if (!product) throw new ApiError(404, 'Product not found');
+
+  product.variants = product.variants.map((variant) => {
+    const next = variant.toObject ? variant.toObject() : { ...variant };
+    if (soldOut) {
+      if (Number(next.stock || 0) > 0) next.previousStock = next.stock;
+      next.stock = 0;
+    } else {
+      const restore = Number(next.previousStock || 0);
+      next.stock = restore > 0 ? restore : 1;
+      next.previousStock = 0;
+    }
+    return next;
+  });
+  product.markModified('variants');
+  await product.save();
+
+  await logActivity({
+    actorType: 'admin',
+    actorId: req.user._id,
+    actorName: req.user.name,
+    action: soldOut ? 'Marked product sold out' : 'Restored product from sold out',
+    target: product.name,
+  });
+
+  sendSuccess(res, {
+    message: soldOut ? 'Marked as sold out' : 'Product is available again',
+    data: product,
+  });
+});
+
 const listCategories = asyncHandler(async (req, res) => {
   const filter = req.userType === 'admin' ? {} : { status: 'active' };
   const categories = await Category.find(filter).sort({ sortOrder: 1, name: 1 });
@@ -214,6 +248,7 @@ module.exports = {
   getInventory,
   adjustStock,
   patchFlags,
+  setSoldOut,
   listCategories,
   upsertCategory,
   deleteCategory,

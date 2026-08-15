@@ -22,6 +22,7 @@ export const productsApi = {
   inventory: () => api.get('/admin/inventory'),
   adjustStock: (id, payload) => api.patch(`/admin/products/${id}/stock`, payload),
   patchFlags: (id, payload) => api.patch(`/admin/products/${id}/flags`, payload),
+  setSoldOut: (id, soldOut) => api.patch(`/admin/products/${id}/sold-out`, { soldOut }),
 }
 
 export const categoriesApi = {
@@ -41,6 +42,7 @@ export const familiesApi = {
 export const ordersApi = {
   list: (params) => api.get('/admin/orders', { params }),
   get: (id) => api.get(`/admin/orders/${id}`),
+  summary: () => api.get('/admin/orders/summary'),
   updateStatus: (id, payload) => api.patch(`/admin/orders/${id}/status`, payload),
   updatePayment: (id, payload) => api.patch(`/admin/orders/${id}/payment-status`, payload),
 }

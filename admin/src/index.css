@@ -58,3 +58,61 @@
     font-family: var(--font-display);
   }
 }
+
+.parcel-label {
+  display: none;
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .parcel-label {
+    display: block !important;
+    max-width: 420px;
+    padding: 24px;
+    border: 2px solid #111827;
+    font-family: "IBM Plex Sans", sans-serif;
+    color: #111827;
+  }
+
+  .parcel-brand {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+
+  .parcel-order {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 16px;
+  }
+
+  .parcel-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  .parcel-address {
+    margin: 12px 0;
+    line-height: 1.45;
+  }
+
+  .parcel-pay {
+    margin-top: 16px;
+    font-weight: 600;
+  }
+}

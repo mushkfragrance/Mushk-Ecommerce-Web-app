@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Printer } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -169,16 +170,23 @@ export function OrderDetailsPage() {
 
   return (
     <div>
-      <PageHeader
-        title={order.orderNumber}
-        description={`Placed ${formatDate(order.createdAt)}`}
-        actions={
-          <Link to="/orders" className="text-sm text-gold hover:underline">
-            Back to orders
-          </Link>
-        }
-      />
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="no-print">
+        <PageHeader
+          title={order.orderNumber}
+          description={`Placed ${formatDate(order.createdAt)}`}
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={() => window.print()}>
+                <Printer size={14} />
+                Print parcel label
+              </Button>
+              <Link to="/orders" className="text-sm text-gold hover:underline">
+                Back to orders
+              </Link>
+            </div>
+          }
+        />
+        <div className="grid gap-6 lg:grid-cols-3">
         <Card title="Items" className="lg:col-span-2">
           <Table headers={['Item', 'Qty', 'Price']}>
             {(order.items || []).map((item) => (
@@ -262,6 +270,24 @@ export function OrderDetailsPage() {
           </Card>
         </div>
       </div>
+      </div>
+
+      <section id="parcel-label" className="parcel-label">
+        <p className="parcel-brand">Mushk Fragrance</p>
+        <p className="parcel-order">{order.orderNumber}</p>
+        <p className="parcel-name">{order.customerSnapshot?.name || 'Guest'}</p>
+        <p>{order.customerSnapshot?.phone}</p>
+        <p className="parcel-address">
+          {order.shippingAddress?.address}
+          <br />
+          {order.shippingAddress?.area}, {order.shippingAddress?.city}
+        </p>
+        {order.shippingAddress?.notes ? <p>Notes: {order.shippingAddress.notes}</p> : null}
+        <p className="parcel-pay">
+          {order.paymentMethod}
+          {order.paymentMethod === 'Cash on Delivery' ? ` · ${formatPrice(order.total)}` : ''}
+        </p>
+      </section>
     </div>
   )
 }

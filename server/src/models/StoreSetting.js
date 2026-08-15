@@ -60,6 +60,7 @@ const storeSettingSchema = new mongoose.Schema(
       online: { type: Boolean, default: false },
     },
     shippingCities: [shippingCitySchema],
+    orderSequence: { type: Number, default: 0, min: 0 },
     homepage: {
       type: homepageSchema,
       default: () => ({

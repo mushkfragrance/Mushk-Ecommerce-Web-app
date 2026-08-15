@@ -3,8 +3,31 @@ const Product = require('../models/Product');
 const Customer = require('../models/Customer');
 const { getSettings } = require('./orderService');
 
+function startOfTodayPakistan() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Karachi',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const value = (type) => parts.find((part) => part.type === type)?.value;
+  return new Date(`${value('year')}-${value('month')}-${value('day')}T00:00:00+05:00`);
+}
+
+async function getOrderSummary() {
+  const todayStart = startOfTodayPakistan();
+  const [pendingOrders, openOrders, ordersToday] = await Promise.all([
+    Order.countDocuments({ status: 'Pending' }),
+    Order.countDocuments({ status: { $nin: ['Delivered', 'Cancelled', 'Returned'] } }),
+    Order.countDocuments({ createdAt: { $gte: todayStart } }),
+  ]);
+  return { pendingOrders, openOrders, ordersToday };
+}
+
 async function getDashboardAnalytics() {
   const settings = await getSettings();
+  const deliveredMatch = { status: 'Delivered' };
+  const todayStart = startOfTodayPakistan();
   const [
     totalSalesAgg,
     totalOrders,
@@ -13,6 +36,7 @@ async function getDashboardAnalytics() {
     shippedOrders,
     deliveredOrders,
     cancelledOrders,
+    ordersToday,
     totalCustomers,
     totalProducts,
     recentOrders,
@@ -20,7 +44,7 @@ async function getDashboardAnalytics() {
     salesByPayment,
   ] = await Promise.all([
     Order.aggregate([
-      { $match: { status: { $nin: ['Cancelled'] } } },
+      { $match: deliveredMatch },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]),
     Order.countDocuments(),
@@ -29,11 +53,13 @@ async function getDashboardAnalytics() {
     Order.countDocuments({ status: 'Shipped' }),
     Order.countDocuments({ status: 'Delivered' }),
     Order.countDocuments({ status: 'Cancelled' }),
+    Order.countDocuments({ createdAt: { $gte: todayStart } }),
     Customer.countDocuments(),
     Product.countDocuments({ status: 'active' }),
     Order.find().sort({ createdAt: -1 }).limit(8),
     Product.find({ status: 'active' }).sort({ popularity: -1 }).limit(5).select('name popularity'),
     Order.aggregate([
+      { $match: deliveredMatch },
       { $group: { _id: '$paymentMethod', value: { $sum: '$total' } } },
       { $project: { name: '$_id', value: 1, _id: 0 } },
     ]),
@@ -45,7 +71,7 @@ async function getDashboardAnalytics() {
   ).length;
 
   const revenueTrend = await Order.aggregate([
-    { $match: { status: { $nin: ['Cancelled'] } } },
+    { $match: deliveredMatch },
     {
       $group: {
         _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
@@ -57,6 +83,7 @@ async function getDashboardAnalytics() {
   ]);
 
   const salesByCategory = await Order.aggregate([
+    { $match: deliveredMatch },
     { $unwind: '$items' },
     {
       $lookup: {
@@ -85,6 +112,7 @@ async function getDashboardAnalytics() {
       shippedOrders,
       deliveredOrders,
       cancelledOrders,
+      ordersToday,
       totalCustomers,
       totalProducts,
       lowStockProducts,
@@ -100,4 +128,4 @@ async function getDashboardAnalytics() {
   };
 }
 
-module.exports = { getDashboardAnalytics };
+module.exports = { getDashboardAnalytics, getOrderSummary };

@@ -38,6 +38,7 @@ export function toProductPayload(form) {
       price: discounted,
       compareAtPrice: actual && actual > discounted ? actual : null,
       stock: Number(v.stock || 0),
+      previousStock: Number(v.previousStock || 0),
     }
   })
 

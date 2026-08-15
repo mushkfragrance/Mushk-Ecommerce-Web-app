@@ -20,6 +20,7 @@ router.put('/admin/products/:id', validate(productSchema), catalogController.upd
 router.patch('/admin/products/:id/archive', catalogController.archiveProduct);
 router.patch('/admin/products/:id/stock', catalogController.adjustStock);
 router.patch('/admin/products/:id/flags', catalogController.patchFlags);
+router.patch('/admin/products/:id/sold-out', catalogController.setSoldOut);
 router.delete('/admin/products/:id', catalogController.deleteProduct);
 router.get('/admin/inventory', catalogController.getInventory);
 

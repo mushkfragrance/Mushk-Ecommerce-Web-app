@@ -68,6 +68,36 @@ function statusesThatRestore() {
   return ['Cancelled', 'Returned'];
 }
 
+async function nextOrderNumber(session) {
+  let settings = await StoreSetting.findOne({ key: 'default' }).session(session);
+  if (!settings) {
+    settings = await getSettings();
+  }
+
+  if (!settings.orderSequence) {
+    const numbered = await Order.find({ orderNumber: /^MF-\d{1,5}$/ })
+      .select('orderNumber')
+      .session(session);
+    let max = 0;
+    for (const order of numbered) {
+      const n = Number(String(order.orderNumber).replace(/^MF-/, ''));
+      if (Number.isFinite(n) && n > max) max = n;
+    }
+    if (!max) {
+      max = await Order.countDocuments().session(session);
+    }
+    settings.orderSequence = max;
+    await settings.save({ session });
+  }
+
+  const updated = await StoreSetting.findOneAndUpdate(
+    { key: 'default' },
+    { $inc: { orderSequence: 1 } },
+    { new: true, session },
+  );
+  return `MF-${String(updated.orderSequence).padStart(3, '0')}`;
+}
+
 async function createOrder(payload, customerId = null) {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -108,7 +138,7 @@ async function createOrder(payload, customerId = null) {
 
     const discount = couponResult.discount;
     const total = Math.max(0, subtotal - discount + shipping);
-    const orderNumber = `MF-${Date.now().toString().slice(-8)}`;
+    const orderNumber = await nextOrderNumber(session);
 
     const [order] = await Order.create(
       [

@@ -138,12 +138,18 @@ export default function ProductsPage() {
 
   const markSoldOut = async (product) => {
     try {
-      const payload = toProductPayload({
-        ...product,
-        variants: product.variants.map((v) => ({ ...v, stock: 0 })),
-      })
-      await productsApi.update(product.id || product._id, payload)
+      await productsApi.setSoldOut(product.id || product._id, true)
       toast.success('Marked as sold out')
+      load()
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
+  }
+
+  const markUnsold = async (product) => {
+    try {
+      await productsApi.setSoldOut(product.id || product._id, false)
+      toast.success('Product is available again')
       load()
     } catch (error) {
       toast.error(getErrorMessage(error))
@@ -266,7 +272,11 @@ export default function ProductsPage() {
                         <Button size="sm" variant="ghost" onClick={() => markSoldOut(product)}>
                           Sold out
                         </Button>
-                      ) : null}
+                      ) : (
+                        <Button size="sm" variant="ghost" onClick={() => markUnsold(product)}>
+                          Unsold
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" onClick={() => handleArchive(product)}>
                         {product.status === 'archived' ? 'Restore' : 'Archive'}
                       </Button>

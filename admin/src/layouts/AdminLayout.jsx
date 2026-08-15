@@ -23,13 +23,13 @@ import {
   Menu,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { brand } from '../lib/utils'
 import { useAuthStore } from '../store'
-import { authApi } from '../lib/services'
+import { authApi, ordersApi } from '../lib/services'
 
 const navSections = [
   {
@@ -76,7 +76,7 @@ const navSections = [
   },
 ]
 
-function Sidebar({ onNavigate }) {
+function Sidebar({ onNavigate, pendingOrders = 0 }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
@@ -108,7 +108,12 @@ function Sidebar({ onNavigate }) {
                   }
                 >
                   <item.icon size={16} />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {item.to === '/orders' && pendingOrders > 0 ? (
+                    <span className="min-w-5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none text-white">
+                      {pendingOrders > 99 ? '99+' : pendingOrders}
+                    </span>
+                  ) : null}
                 </NavLink>
               ))}
             </div>
@@ -121,14 +126,33 @@ function Sidebar({ onNavigate }) {
 
 export default function AdminLayout() {
   const [open, setOpen] = useState(false)
+  const [pendingOrders, setPendingOrders] = useState(0)
   const admin = useAuthStore((s) => s.admin)
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
 
+  useEffect(() => {
+    let alive = true
+    const load = () => {
+      ordersApi
+        .summary()
+        .then(({ data }) => {
+          if (alive) setPendingOrders(Number(data.data?.pendingOrders || 0))
+        })
+        .catch(() => {})
+    }
+    load()
+    const timer = setInterval(load, 30000)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[260px_1fr]">
       <aside className="hidden bg-sidebar lg:block">
-        <Sidebar />
+        <Sidebar pendingOrders={pendingOrders} />
       </aside>
 
       {open ? (
@@ -148,7 +172,7 @@ export default function AdminLayout() {
             >
               <X size={20} />
             </button>
-            <Sidebar onNavigate={() => setOpen(false)} />
+            <Sidebar onNavigate={() => setOpen(false)} pendingOrders={pendingOrders} />
           </div>
         </div>
       ) : null}

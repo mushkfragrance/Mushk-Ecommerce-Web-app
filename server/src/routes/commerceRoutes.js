@@ -35,6 +35,7 @@ router.post('/reviews', optionalAuth, validate(reviewSchema), commerceController
 router.get('/account/orders', protect, requireCustomer, commerceController.myOrders);
 
 router.use('/admin', protect, requireAdmin());
+router.get('/admin/orders/summary', commerceController.orderSummary);
 router.get('/admin/orders', commerceController.listOrders);
 router.get('/admin/orders/:id', commerceController.getOrder);
 router.patch(

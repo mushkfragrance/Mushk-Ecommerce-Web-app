@@ -52,12 +52,17 @@ export default function DashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total sales" value={formatPrice(kpis.totalSales)} icon={Wallet} />
         <StatCard
-          label="Total orders"
-          value={kpis.totalOrders}
+          label="Total sales"
+          value={formatPrice(kpis.totalSales)}
+          icon={Wallet}
+          hint="Counted when an order is delivered"
+        />
+        <StatCard
+          label="New orders today"
+          value={kpis.ordersToday ?? 0}
           icon={ShoppingCart}
-          hint={`${kpis.pendingOrders} pending`}
+          hint={`${kpis.totalOrders} total · ${kpis.pendingOrders} pending`}
         />
         <StatCard label="Customers" value={kpis.totalCustomers} icon={Users} />
         <StatCard
