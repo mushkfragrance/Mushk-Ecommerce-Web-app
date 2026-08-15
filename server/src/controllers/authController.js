@@ -3,6 +3,7 @@ const Customer = require('../models/Customer');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/ApiResponse');
 const { ApiError } = require('../utils/ApiError');
+const { env } = require('../config/env');
 const authService = require('../services/authService');
 const { logActivity } = require('../utils/activity');
 
@@ -41,7 +42,9 @@ const logout = asyncHandler(async (req, res) => {
 });
 
 const forgotCustomerPassword = asyncHandler(async (req, res) => {
-  const result = await authService.requestPasswordReset(Customer, req.body.email);
+  const result = await authService.requestPasswordReset(Customer, req.body.email, {
+    appUrl: env.CLIENT_URL,
+  });
   sendSuccess(res, { message: result.message, data: result });
 });
 
@@ -51,7 +54,9 @@ const resetCustomerPassword = asyncHandler(async (req, res) => {
 });
 
 const forgotAdminPassword = asyncHandler(async (req, res) => {
-  const result = await authService.requestPasswordReset(AdminUser, req.body.email);
+  const result = await authService.requestPasswordReset(AdminUser, req.body.email, {
+    appUrl: env.ADMIN_URL,
+  });
   sendSuccess(res, { message: result.message, data: result });
 });
 
