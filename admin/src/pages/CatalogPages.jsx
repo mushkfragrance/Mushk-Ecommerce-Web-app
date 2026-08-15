@@ -3,104 +3,62 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
 import { Badge, Button, Card, EmptyRow, Input, Modal, PageHeader, Select, Table } from '../components/ui'
-import { useAdminDataStore } from '../store'
-import { productsApi, getErrorMessage } from '../lib/services'
+import { familiesApi, getErrorMessage, productsApi } from '../lib/services'
+import { slugify } from '../lib/productHelpers'
 
-export function CategoriesPage() {
-  const categories = useAdminDataStore((s) => s.categories)
-  const upsertCategory = useAdminDataStore((s) => s.upsertCategory)
-  const deleteCategory = useAdminDataStore((s) => s.deleteCategory)
+export function FamiliesPage() {
+  const [families, setFamilies] = useState([])
+  const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const { register, handleSubmit, reset } = useForm()
 
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await familiesApi.list()
+      setFamilies(data.data || [])
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to load fragrance families'))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
   const openModal = (item) => {
-    setEditing(item || { id: `cat-${Date.now()}`, name: '', slug: '', productCount: 0, status: 'active' })
-    reset(item || { name: '', slug: '', status: 'active' })
+    const next = item
+      ? { ...item, id: item._id || item.id }
+      : { id: '', name: '', slug: '' }
+    setEditing(next)
+    reset({ name: next.name || '', slug: next.slug || '' })
     setOpen(true)
   }
 
-  return (
-    <div>
-      <PageHeader
-        title="Categories"
-        description="Gender and collection categories used on the storefront."
-        actions={
-          <Button onClick={() => openModal(null)}>
-            <Plus size={16} /> Add category
-          </Button>
-        }
-      />
-      <Card>
-        <Table headers={['Name', 'Slug', 'Products', 'Status', 'Actions']}>
-          {categories.map((item) => (
-            <tr key={item.id} className="border-b border-line last:border-0">
-              <td className="px-3 py-3 font-medium">{item.name}</td>
-              <td className="px-3 py-3 text-muted">{item.slug}</td>
-              <td className="px-3 py-3">{item.productCount}</td>
-              <td className="px-3 py-3">
-                <Badge tone="success">{item.status}</Badge>
-              </td>
-              <td className="px-3 py-3">
-                <div className="flex gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => openModal(item)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    onClick={() => {
-                      deleteCategory(item.id)
-                      toast.success('Category deleted')
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </Table>
-      </Card>
-      <Modal open={open} onClose={() => setOpen(false)} title="Category">
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmit((data) => {
-            upsertCategory({ ...editing, ...data })
-            toast.success('Category saved')
-            setOpen(false)
-          })}
-        >
-          <Input label="Name" {...register('name', { required: true })} />
-          <Input label="Slug" {...register('slug', { required: true })} />
-          <Select label="Status" {...register('status')}>
-            <option value="active">Active</option>
-            <option value="hidden">Hidden</option>
-          </Select>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Save</Button>
-          </div>
-        </form>
-      </Modal>
-    </div>
-  )
-}
+  const save = async (data) => {
+    const payload = { name: data.name, slug: data.slug || slugify(data.name) }
+    try {
+      if (editing?.id) await familiesApi.update(editing.id, payload)
+      else await familiesApi.create(payload)
+      toast.success('Family saved')
+      setOpen(false)
+      load()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not save family'))
+    }
+  }
 
-export function FamiliesPage() {
-  const families = useAdminDataStore((s) => s.families)
-  const upsertFamily = useAdminDataStore((s) => s.upsertFamily)
-  const deleteFamily = useAdminDataStore((s) => s.deleteFamily)
-  const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const { register, handleSubmit, reset } = useForm()
-
-  const openModal = (item) => {
-    setEditing(item || { id: `ff-${Date.now()}`, name: '', slug: '', productCount: 0 })
-    reset(item || { name: '', slug: '' })
-    setOpen(true)
+  const remove = async (item) => {
+    try {
+      await familiesApi.remove(item._id || item.id)
+      toast.success('Family deleted')
+      load()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not delete family'))
+    }
   }
 
   return (
@@ -115,26 +73,20 @@ export function FamiliesPage() {
         }
       />
       <Card>
-        {families.length ? (
-          <Table headers={['Name', 'Slug', 'Products', 'Actions']}>
+        {loading ? (
+          <p className="py-8 text-sm text-muted">Loading families…</p>
+        ) : families.length ? (
+          <Table headers={['Name', 'Slug', 'Actions']}>
             {families.map((item) => (
-              <tr key={item.id} className="border-b border-line last:border-0">
+              <tr key={item._id || item.id} className="border-b border-line last:border-0">
                 <td className="px-3 py-3 font-medium">{item.name}</td>
                 <td className="px-3 py-3 text-muted">{item.slug}</td>
-                <td className="px-3 py-3">{item.productCount}</td>
                 <td className="px-3 py-3">
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" onClick={() => openModal(item)}>
                       Edit
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => {
-                        deleteFamily(item.id)
-                        toast.success('Family deleted')
-                      }}
-                    >
+                    <Button size="sm" variant="danger" onClick={() => remove(item)}>
                       Delete
                     </Button>
                   </div>
@@ -143,20 +95,13 @@ export function FamiliesPage() {
             ))}
           </Table>
         ) : (
-          <EmptyRow />
+          <EmptyRow message="No fragrance families yet." />
         )}
       </Card>
       <Modal open={open} onClose={() => setOpen(false)} title="Fragrance family">
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmit((data) => {
-            upsertFamily({ ...editing, ...data, productCount: editing.productCount || 0 })
-            toast.success('Family saved')
-            setOpen(false)
-          })}
-        >
+        <form className="space-y-4" onSubmit={handleSubmit(save)}>
           <Input label="Name" {...register('name', { required: true })} />
-          <Input label="Slug" {...register('slug', { required: true })} />
+          <Input label="Slug" {...register('slug')} />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
               Cancel
