@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
 const { env } = require('./config/env');
+const { configureCloudinary } = require('./config/cloudinary');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/authRoutes');
@@ -61,6 +62,7 @@ app.get('/api/health', (req, res) => {
     success: true,
     message: 'Mushk Fragrance API is healthy',
     env: env.NODE_ENV,
+    imageStorage: configureCloudinary() ? 'cloudinary' : 'unconfigured',
     timestamp: new Date().toISOString(),
   });
 });

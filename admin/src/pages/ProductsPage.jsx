@@ -366,7 +366,7 @@ function ProductFormModal({ open, product, onClose, onSave, saving }) {
             title: 'Product images',
             bullets: [
               'Recommended: 1200×1500 px (4:5 portrait), up to 1600×2000',
-              'Max 5 MB each · JPG/WebP · Uploaded to Cloudinary when configured',
+              'Max 5 MB each · JPG/WebP · Stored on Cloudinary so they stay after deploys',
               'First image is primary on shop cards and product page',
             ],
           }}

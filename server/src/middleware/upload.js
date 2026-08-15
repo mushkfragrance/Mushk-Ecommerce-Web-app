@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
+const { env } = require('../config/env');
 const { ApiError } = require('../utils/ApiError');
 const { cloudinary, configureCloudinary } = require('../config/cloudinary');
 
@@ -85,7 +86,9 @@ async function saveUploadedImage(file, publicBaseUrl, options = {}) {
 
   const slot = options.slot || 'product';
   const requireCloudinary =
-    options.requireCloudinary === true || CLOUDINARY_REQUIRED_SLOTS.has(slot);
+    options.requireCloudinary === true ||
+    CLOUDINARY_REQUIRED_SLOTS.has(slot) ||
+    env.NODE_ENV === 'production';
   const folder = resolveFolder(slot);
 
   const configured = configureCloudinary();
@@ -102,7 +105,7 @@ async function saveUploadedImage(file, publicBaseUrl, options = {}) {
   if (requireCloudinary) {
     throw new ApiError(
       503,
-      'Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to server/.env, then restart the API.',
+      'Cloudinary is not configured on the API. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Railway Variables, then redeploy. Product photos cannot be stored on the server disk in production.',
     );
   }
 
