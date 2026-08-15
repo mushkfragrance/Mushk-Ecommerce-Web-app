@@ -126,6 +126,23 @@ const adjustStock = asyncHandler(async (req, res) => {
   sendSuccess(res, { message: 'Stock updated', data: product });
 });
 
+const patchFlags = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) throw new ApiError(404, 'Product not found');
+  for (const key of ['featured', 'bestSeller', 'newArrival', 'onSale']) {
+    if (req.body[key] !== undefined) product[key] = Boolean(req.body[key]);
+  }
+  await product.save();
+  await logActivity({
+    actorType: 'admin',
+    actorId: req.user._id,
+    actorName: req.user.name,
+    action: 'Updated merchandising flags',
+    target: product.name,
+  });
+  sendSuccess(res, { message: 'Product flags updated', data: product });
+});
+
 const listCategories = asyncHandler(async (req, res) => {
   const filter = req.userType === 'admin' ? {} : { status: 'active' };
   const categories = await Category.find(filter).sort({ sortOrder: 1, name: 1 });
@@ -196,6 +213,7 @@ module.exports = {
   deleteProduct,
   getInventory,
   adjustStock,
+  patchFlags,
   listCategories,
   upsertCategory,
   deleteCategory,

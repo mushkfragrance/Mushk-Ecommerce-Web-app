@@ -19,6 +19,7 @@ router.post('/admin/products', validate(productSchema), catalogController.create
 router.put('/admin/products/:id', validate(productSchema), catalogController.updateProduct);
 router.patch('/admin/products/:id/archive', catalogController.archiveProduct);
 router.patch('/admin/products/:id/stock', catalogController.adjustStock);
+router.patch('/admin/products/:id/flags', catalogController.patchFlags);
 router.delete('/admin/products/:id', catalogController.deleteProduct);
 router.get('/admin/inventory', catalogController.getInventory);
 
