@@ -21,6 +21,7 @@ export const productsApi = {
   remove: (id) => api.delete(`/admin/products/${id}`),
   inventory: () => api.get('/admin/inventory'),
   adjustStock: (id, payload) => api.patch(`/admin/products/${id}/stock`, payload),
+  patchFlags: (id, payload) => api.patch(`/admin/products/${id}/flags`, payload),
 }
 
 export const categoriesApi = {
