@@ -1,14 +1,36 @@
 const { z } = require('zod');
 const dotenv = require('dotenv');
 
-dotenv.config({ override: true });
+// Never override host-provided vars (Railway). Local .env only fills gaps.
+dotenv.config({ override: false });
+
+function clean(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim().replace(/^['"]|['"]$/g, '');
+  return trimmed === '' ? undefined : trimmed;
+}
+
+function cleanEnv(source) {
+  const next = { ...source };
+  for (const [key, value] of Object.entries(source)) {
+    if (typeof value === 'string') next[key] = clean(value);
+  }
+  if (!next.NODE_ENV && (source.RAILWAY_ENVIRONMENT || source.RAILWAY_ENVIRONMENT_NAME)) {
+    next.NODE_ENV = 'production';
+  }
+  if (typeof next.NODE_ENV === 'string') {
+    next.NODE_ENV = next.NODE_ENV.toLowerCase();
+  }
+  return next;
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(5000),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
-  JWT_ACCESS_SECRET: z.string().min(16),
-  JWT_REFRESH_SECRET: z.string().min(16),
+  JWT_ACCESS_SECRET: z.string().min(16, 'JWT_ACCESS_SECRET must be at least 16 characters'),
+  JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('8h'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   COOKIE_SECURE: z
@@ -30,7 +52,7 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().optional().default('Mushk Fragrance <noreply@mushkfragrance.com>'),
 });
 
-const parsed = envSchema.safeParse(process.env);
+const parsed = envSchema.safeParse(cleanEnv(process.env));
 
 if (!parsed.success) {
   console.error('Invalid environment variables:');
