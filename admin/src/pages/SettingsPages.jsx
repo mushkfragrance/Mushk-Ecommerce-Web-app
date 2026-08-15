@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
@@ -6,6 +6,7 @@ import {
   Badge,
   Button,
   Card,
+  EmptyRow,
   Input,
   Modal,
   PageHeader,
@@ -14,20 +15,97 @@ import {
   TextArea,
 } from '../components/ui'
 import { formatPrice } from '../lib/utils'
-import { useAdminDataStore, useAuthStore } from '../store'
-import { contentApi, getErrorMessage } from '../lib/services'
+import { useAuthStore } from '../store'
+import { authApi, contentApi, getErrorMessage } from '../lib/services'
+
+function cityId(city) {
+  return city._id || city.id
+}
 
 export function ShippingPage() {
-  const cities = useAdminDataStore((s) => s.shippingCities)
-  const settings = useAdminDataStore((s) => s.settings)
-  const upsertCity = useAdminDataStore((s) => s.upsertCity)
-  const updateSettings = useAdminDataStore((s) => s.updateSettings)
+  const [settings, setSettings] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const { register, handleSubmit, reset } = useForm()
   const thresholdForm = useForm({
-    values: { freeShippingThreshold: settings.freeShippingThreshold },
+    defaultValues: { freeShippingThreshold: 8000 },
   })
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await contentApi.settings()
+      const next = data.data || {}
+      setSettings(next)
+      thresholdForm.reset({
+        freeShippingThreshold: next.freeShippingThreshold ?? 8000,
+      })
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to load shipping settings'))
+    } finally {
+      setLoading(false)
+    }
+    // thresholdForm.reset is stable enough for this load; avoid depending on the form object.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const cities = settings?.shippingCities || []
+
+  const saveCities = async (nextCities) => {
+    const { data } = await contentApi.updateSettings({ shippingCities: nextCities })
+    setSettings(data.data || settings)
+  }
+
+  const saveThreshold = async (data) => {
+    try {
+      const { data: res } = await contentApi.updateSettings({
+        freeShippingThreshold: Number(data.freeShippingThreshold),
+      })
+      setSettings(res.data || settings)
+      toast.success('Threshold updated')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not save threshold'))
+    }
+  }
+
+  const saveCity = async (data) => {
+    const nextCity = {
+      city: data.city,
+      fee: Number(data.fee),
+      eta: data.eta,
+      active: data.active === true || data.active === 'true',
+    }
+    const editingId = editing?._id || editing?.id
+    if (editingId) nextCity._id = editingId
+    const nextCities = editingId
+      ? cities.map((city) => (cityId(city) === editingId ? { ...city, ...nextCity } : city))
+      : [...cities, nextCity]
+    try {
+      await saveCities(nextCities)
+      toast.success('City saved')
+      setOpen(false)
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not save city'))
+    }
+  }
+
+  const removeCity = async (city) => {
+    try {
+      await saveCities(cities.filter((item) => cityId(item) !== cityId(city)))
+      toast.success('City removed')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not remove city'))
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm text-muted">Loading shipping settings…</p>
+  }
 
   return (
     <div>
@@ -37,15 +115,9 @@ export function ShippingPage() {
         actions={
           <Button
             onClick={() => {
-              const next = {
-                id: `sc-${Date.now()}`,
-                city: '',
-                fee: 250,
-                eta: '2–4 days',
-                active: true,
-              }
+              const next = { city: '', fee: 250, eta: '2–4 days', active: true }
               setEditing(next)
-              reset(next)
+              reset({ ...next, active: 'true' })
               setOpen(true)
             }}
           >
@@ -58,10 +130,7 @@ export function ShippingPage() {
         <Card title="Free shipping threshold">
           <form
             className="flex flex-wrap items-end gap-3"
-            onSubmit={thresholdForm.handleSubmit((data) => {
-              updateSettings({ freeShippingThreshold: Number(data.freeShippingThreshold) })
-              toast.success('Threshold updated')
-            })}
+            onSubmit={thresholdForm.handleSubmit(saveThreshold)}
           >
             <Input
               label="Amount (Rs.)"
@@ -73,50 +142,47 @@ export function ShippingPage() {
         </Card>
 
         <Card title="Delivery cities">
-          <Table headers={['City', 'Fee', 'ETA', 'Status', 'Actions']}>
-            {cities.map((city) => (
-              <tr key={city.id} className="border-b border-line last:border-0">
-                <td className="px-3 py-3 font-medium">{city.city}</td>
-                <td className="px-3 py-3">{formatPrice(city.fee)}</td>
-                <td className="px-3 py-3 text-muted">{city.eta}</td>
-                <td className="px-3 py-3">
-                  <Badge tone={city.active ? 'success' : 'neutral'}>
-                    {city.active ? 'Active' : 'Disabled'}
-                  </Badge>
-                </td>
-                <td className="px-3 py-3">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => {
-                      setEditing(city)
-                      reset({ ...city, active: String(city.active) })
-                      setOpen(true)
-                    }}
-                  >
-                    Edit
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </Table>
+          {cities.length ? (
+            <Table headers={['City', 'Fee', 'ETA', 'Status', 'Actions']}>
+              {cities.map((city) => (
+                <tr key={cityId(city)} className="border-b border-line last:border-0">
+                  <td className="px-3 py-3 font-medium">{city.city}</td>
+                  <td className="px-3 py-3">{formatPrice(city.fee)}</td>
+                  <td className="px-3 py-3 text-muted">{city.eta}</td>
+                  <td className="px-3 py-3">
+                    <Badge tone={city.active ? 'success' : 'neutral'}>
+                      {city.active ? 'Active' : 'Disabled'}
+                    </Badge>
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setEditing(city)
+                          reset({ ...city, active: String(Boolean(city.active)) })
+                          setOpen(true)
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => removeCity(city)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </Table>
+          ) : (
+            <EmptyRow message="No delivery cities yet. Add the cities you ship to." />
+          )}
         </Card>
       </div>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Shipping city">
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmit((data) => {
-            upsertCity({
-              ...editing,
-              ...data,
-              fee: Number(data.fee),
-              active: data.active === true || data.active === 'true',
-            })
-            toast.success('City saved')
-            setOpen(false)
-          })}
-        >
+        <form className="space-y-4" onSubmit={handleSubmit(saveCity)}>
           <Input label="City" {...register('city', { required: true })} />
           <Input label="Fee" type="number" {...register('fee', { required: true })} />
           <Input label="ETA" {...register('eta', { required: true })} />
@@ -137,47 +203,79 @@ export function ShippingPage() {
 }
 
 export function PaymentsPage() {
-  const settings = useAdminDataStore((s) => s.settings)
-  const updateSettings = useAdminDataStore((s) => s.updateSettings)
+  const [settings, setSettings] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await contentApi.settings()
+      setSettings(data.data || {})
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to load payment settings'))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const methods = settings?.paymentMethods || { cod: true, online: false }
+
+  const toggle = async (key, checked) => {
+    const paymentMethods = { ...methods, [key]: checked }
+    setSaving(true)
+    try {
+      const { data } = await contentApi.updateSettings({ paymentMethods })
+      setSettings(data.data || { ...settings, paymentMethods })
+      toast.success('Payment settings saved')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not save payment settings'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm text-muted">Loading payment settings…</p>
+  }
 
   return (
     <div>
       <PageHeader
         title="Payment methods"
-        description="Enable or disable checkout payment options."
+        description="Choose which payment options appear at checkout."
       />
       <Card>
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-3 rounded-lg border border-line p-4">
             <div>
               <p className="font-medium">Cash on Delivery</p>
-              <p className="text-sm text-muted">Primary method for Pakistan checkout</p>
+              <p className="text-sm text-muted">Customers pay when the order is delivered.</p>
             </div>
             <input
               type="checkbox"
-              checked={settings.paymentMethods.cod}
-              onChange={(e) => {
-                updateSettings({
-                  paymentMethods: { ...settings.paymentMethods, cod: e.target.checked },
-                })
-                toast.success('COD setting updated')
-              }}
+              checked={Boolean(methods.cod)}
+              disabled={saving}
+              onChange={(e) => toggle('cod', e.target.checked)}
             />
           </label>
           <label className="flex items-center justify-between gap-3 rounded-lg border border-line p-4">
             <div>
               <p className="font-medium">Online payment</p>
-              <p className="text-sm text-muted">Placeholder for JazzCash / card gateway later</p>
+              <p className="text-sm text-muted">
+                Show online payment at checkout. Connect a gateway later to collect card or wallet
+                payments automatically.
+              </p>
             </div>
             <input
               type="checkbox"
-              checked={settings.paymentMethods.online}
-              onChange={(e) => {
-                updateSettings({
-                  paymentMethods: { ...settings.paymentMethods, online: e.target.checked },
-                })
-                toast.success('Online payment setting updated')
-              }}
+              checked={Boolean(methods.online)}
+              disabled={saving}
+              onChange={(e) => toggle('online', e.target.checked)}
             />
           </label>
         </div>
@@ -339,18 +437,44 @@ export function ProfilePage() {
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   })
 
+  const saveProfile = async (data) => {
+    try {
+      const { data: res } = await authApi.updateProfile({ name: data.name, email: data.email })
+      const next = res.data?.admin || data
+      updateProfile({ name: next.name, email: next.email, role: next.role || admin?.role })
+      toast.success('Profile updated')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not update profile'))
+    }
+  }
+
+  const savePassword = async (data) => {
+    if (data.newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters')
+      return
+    }
+    if (data.newPassword !== data.confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+    try {
+      await authApi.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      })
+      toast.success('Password updated')
+      passwordForm.reset()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not update password'))
+    }
+  }
+
   return (
     <div>
-      <PageHeader title="Admin profile" description="Update profile details and password (simulated)." />
+      <PageHeader title="Admin profile" description="Update your name, email, and password." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Profile">
-          <form
-            className="space-y-4"
-            onSubmit={profileForm.handleSubmit((data) => {
-              updateProfile(data)
-              toast.success('Profile updated')
-            })}
-          >
+          <form className="space-y-4" onSubmit={profileForm.handleSubmit(saveProfile)}>
             <Input label="Name" {...profileForm.register('name', { required: true })} />
             <Input label="Email" type="email" {...profileForm.register('email', { required: true })} />
             <p className="text-sm text-muted">Role: {admin?.role}</p>
@@ -358,21 +482,7 @@ export function ProfilePage() {
           </form>
         </Card>
         <Card title="Change password">
-          <form
-            className="space-y-4"
-            onSubmit={passwordForm.handleSubmit((data) => {
-              if (data.newPassword.length < 6) {
-                toast.error('New password must be at least 6 characters')
-                return
-              }
-              if (data.newPassword !== data.confirmPassword) {
-                toast.error('Passwords do not match')
-                return
-              }
-              toast.success('Password changed (prototype only)')
-              passwordForm.reset()
-            })}
-          >
+          <form className="space-y-4" onSubmit={passwordForm.handleSubmit(savePassword)}>
             <Input
               label="Current password"
               type="password"
@@ -397,22 +507,54 @@ export function ProfilePage() {
 }
 
 export function ActivityPage() {
-  const logs = useAdminDataStore((s) => s.activityLogs)
+  const [logs, setLogs] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    contentApi
+      .activity()
+      .then(({ data }) => {
+        if (active) setLogs(data.data || [])
+      })
+      .catch((error) => {
+        toast.error(getErrorMessage(error, 'Failed to load activity'))
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   return (
     <div>
-      <PageHeader title="Activity logs" description="Recent admin actions in this prototype session." />
+      <PageHeader title="Activity logs" description="Recent admin actions saved to the live database." />
       <Card>
-        <Table headers={['When', 'Actor', 'Action', 'Target']}>
-          {logs.map((log) => (
-            <tr key={log.id} className="border-b border-line last:border-0">
-              <td className="px-3 py-3 text-muted">{log.date}</td>
-              <td className="px-3 py-3">{log.actor}</td>
-              <td className="px-3 py-3 font-medium">{log.action}</td>
-              <td className="px-3 py-3 text-muted">{log.target}</td>
-            </tr>
-          ))}
-        </Table>
+        {loading ? (
+          <p className="py-8 text-sm text-muted">Loading activity…</p>
+        ) : logs.length ? (
+          <Table headers={['When', 'Actor', 'Action', 'Target']}>
+            {logs.map((log) => (
+              <tr key={log._id || log.id} className="border-b border-line last:border-0">
+                <td className="px-3 py-3 text-muted">
+                  {log.createdAt
+                    ? new Date(log.createdAt).toLocaleString('en-PK', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })
+                    : '—'}
+                </td>
+                <td className="px-3 py-3">{log.actorName || log.actor || 'Admin'}</td>
+                <td className="px-3 py-3 font-medium">{log.action}</td>
+                <td className="px-3 py-3 text-muted">{log.target || '—'}</td>
+              </tr>
+            ))}
+          </Table>
+        ) : (
+          <EmptyRow message="No activity yet." />
+        )}
       </Card>
     </div>
   )
