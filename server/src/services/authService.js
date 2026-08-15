@@ -11,6 +11,8 @@ const {
   clearAuthCookies,
 } = require('../utils/tokens');
 const { logActivity } = require('../utils/activity');
+const { env } = require('../config/env');
+const { isMailConfigured, sendMail } = require('../utils/mailer');
 
 function issueTokens(res, user, role) {
   const payload = {
@@ -100,10 +102,10 @@ async function logout(req, res) {
   clearAuthCookies(res);
 }
 
-async function requestPasswordReset(Model, email) {
+async function requestPasswordReset(Model, email, { appUrl } = {}) {
   const user = await Model.findOne({ email }).select('+passwordResetToken +passwordResetExpires');
   if (!user) {
-    return { message: 'If that email exists, a reset link would be sent.' };
+    return { message: 'If that email exists, a reset link will be sent.' };
   }
 
   const token = crypto.randomBytes(32).toString('hex');
@@ -111,10 +113,23 @@ async function requestPasswordReset(Model, email) {
   user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
   await user.save({ validateBeforeSave: false });
 
-  // Email wiring is optional in Phase 3; return token only in non-production for testing.
+  const baseUrl = (appUrl || env.CLIENT_URL || '').replace(/\/$/, '');
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+  if (isMailConfigured()) {
+    await sendMail({
+      to: user.email,
+      subject: 'Reset your Mushk Fragrance password',
+      text: `Reset your password using this link (expires in 1 hour):\n${resetUrl}`,
+      html: `<p>Reset your password using this link. It expires in 1 hour.</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
+    });
+  } else {
+    console.warn('SMTP is not configured; password reset email was not sent.');
+  }
+
   return {
-    message: 'If that email exists, a reset link would be sent.',
-    ...(process.env.NODE_ENV !== 'production' ? { resetToken: token } : {}),
+    message: 'If that email exists, a reset link will be sent.',
+    ...(env.NODE_ENV !== 'production' ? { resetToken: token } : {}),
   };
 }
 
