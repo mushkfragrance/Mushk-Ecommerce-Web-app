@@ -18,7 +18,7 @@ export default function FloatingWhatsApp() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with Mushk Fragrance on WhatsApp"
-      className="fixed right-4 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full border border-gold bg-gold text-ink shadow-gold transition hover:bg-gold-bright sm:right-5 sm:h-16 sm:w-16 max-lg:bottom-24 lg:bottom-5"
+      className="fixed bottom-6 right-4 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full border border-gold bg-gold text-ink shadow-gold transition hover:bg-gold-bright sm:bottom-5 sm:right-5 sm:h-16 sm:w-16"
     >
       <WhatsAppIcon />
     </a>
