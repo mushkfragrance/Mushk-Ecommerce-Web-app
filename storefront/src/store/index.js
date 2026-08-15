@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { getVariantPrice } from '../lib/format'
-import { settings } from '../data/content'
+
+const DEFAULT_SHIPPING_FEE = 250
+const DEFAULT_FREE_SHIPPING = 8000
 
 export const useCartStore = create(
   persist(
@@ -56,15 +58,7 @@ export const useCartStore = create(
 
       clearCart: () => set({ items: [], promoCode: null }),
 
-      applyPromo: (code) => {
-        const normalized = String(code || '')
-          .trim()
-          .toUpperCase()
-        const promo = settings.promoCodes[normalized]
-        if (!promo) return { ok: false, message: 'Invalid promo code' }
-        set({ promoCode: { code: normalized, ...promo } })
-        return { ok: true, message: promo.label }
-      },
+      setPromo: (promo) => set({ promoCode: promo }),
 
       clearPromo: () => set({ promoCode: null }),
 
@@ -74,22 +68,24 @@ export const useCartStore = create(
       getDiscount: () => {
         const subtotal = get().getSubtotal()
         const promo = get().promoCode
-        if (!promo || promo.type !== 'percent') return 0
-        return Math.round((subtotal * promo.value) / 100)
+        if (!promo) return 0
+        if (promo.type === 'percent') return Math.round((subtotal * promo.value) / 100)
+        if (promo.type === 'fixed') return Math.min(subtotal, promo.value)
+        return 0
       },
 
-      getShipping: (cityFee = settings.defaultShippingFee) => {
+      getShipping: (cityFee = DEFAULT_SHIPPING_FEE, freeShippingThreshold = DEFAULT_FREE_SHIPPING) => {
         const subtotal = get().getSubtotal()
         const promo = get().promoCode
-        if (promo?.type === 'shipping') return 0
-        if (subtotal >= settings.freeShippingThreshold) return 0
+        if (promo?.type === 'shipping' || promo?.freeShipping) return 0
+        if (subtotal >= freeShippingThreshold) return 0
         return cityFee
       },
 
-      getTotal: (cityFee) => {
+      getTotal: (cityFee, freeShippingThreshold) => {
         const subtotal = get().getSubtotal()
         const discount = get().getDiscount()
-        const shipping = get().getShipping(cityFee)
+        const shipping = get().getShipping(cityFee, freeShippingThreshold)
         return Math.max(0, subtotal - discount + shipping)
       },
 

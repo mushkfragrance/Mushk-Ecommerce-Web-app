@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingBag } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -8,10 +8,10 @@ import Button from '../components/ui/Button'
 import Input, { Select, TextArea } from '../components/ui/Input'
 import EmptyState from '../components/ui/EmptyState'
 import Seo from '../components/seo/Seo'
-import { shippingZones } from '../data/content'
 import { formatPrice } from '../lib/format'
 import { useAuthStore, useCartStore } from '../store'
 import { storeApi, getErrorMessage } from '../lib/services'
+import { useStoreSettings } from '../hooks/useStoreSettings'
 
 const initialForm = {
   guest: true,
@@ -45,16 +45,35 @@ export default function CheckoutPage() {
   })
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  const { settings } = useStoreSettings()
+  const cities = settings?.shippingCities || []
+  const threshold = settings?.freeShippingThreshold ?? 8000
+  const methods = settings?.paymentMethods || { cod: true, online: false }
+  const canPay = Boolean(methods.cod) || Boolean(methods.online)
+
+  useEffect(() => {
+    if (!cities.length) return
+    if (!cities.some((city) => city.city === form.city)) {
+      setForm((prev) => ({ ...prev, city: cities[0].city }))
+    }
+  }, [cities, form.city])
+
+  useEffect(() => {
+    if (!methods.cod && methods.online && form.paymentMethod === 'cod') {
+      setForm((prev) => ({ ...prev, paymentMethod: 'online' }))
+    }
+  }, [methods.cod, methods.online, form.paymentMethod])
 
   const cityFee = useMemo(
-    () => shippingZones.find((z) => z.city === form.city)?.fee || 350,
-    [form.city],
+    () => cities.find((zone) => zone.city === form.city)?.fee ?? 350,
+    [cities, form.city],
   )
+  const selectedCity = cities.find((zone) => zone.city === form.city)
 
   const subtotal = getSubtotal()
   const discount = getDiscount()
-  const shipping = getShipping(cityFee)
-  const total = getTotal(cityFee)
+  const shipping = getShipping(cityFee, threshold)
+  const total = getTotal(cityFee, threshold)
 
   if (!items.length) {
     return (
@@ -150,7 +169,7 @@ export default function CheckoutPage() {
       <PageHero
         eyebrow="Checkout"
         title="Checkout"
-        description="Guest checkout is available. Online payment is shown as a future option."
+        description="Guest checkout is available. Signed-in orders appear in your account."
         crumbs={
           <Breadcrumbs
             items={[
@@ -225,11 +244,15 @@ export default function CheckoutPage() {
                 error={errors.city}
                 onChange={(e) => update('city', e.target.value)}
               >
-                {shippingZones.map((zone) => (
-                  <option key={zone.city} value={zone.city}>
-                    {zone.city}
-                  </option>
-                ))}
+                {cities.length ? (
+                  cities.map((zone) => (
+                    <option key={zone._id || zone.city} value={zone.city}>
+                      {zone.city}
+                    </option>
+                  ))
+                ) : (
+                  <option value={form.city}>{form.city}</option>
+                )}
               </Select>
               <Input
                 id="area"
@@ -262,35 +285,48 @@ export default function CheckoutPage() {
                 />
                 <span>
                   <span className="block text-ivory">Standard delivery</span>
-                  <span className="text-sm text-muted">2–4 business days in major cities</span>
+                  <span className="text-sm text-muted">
+                    {selectedCity?.eta || '2–4 business days in major cities'}
+                  </span>
                 </span>
               </label>
-              <label className="flex min-h-11 items-start gap-3 border border-gold/40 bg-gold/5 p-3">
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={form.paymentMethod === 'cod'}
-                  onChange={() => update('paymentMethod', 'cod')}
-                  className="mt-1 accent-gold"
-                />
-                <span>
-                  <span className="block text-ivory">Cash on Delivery</span>
-                  <span className="text-sm text-muted">Pay when your order arrives</span>
-                </span>
-              </label>
-              <label className="flex min-h-11 items-start gap-3 border border-border p-3 opacity-70">
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={form.paymentMethod === 'online'}
-                  onChange={() => update('paymentMethod', 'online')}
-                  className="mt-1 accent-gold"
-                />
-                <span>
-                  <span className="block text-ivory">Online payment</span>
-                  <span className="text-sm text-muted">Coming soon — placeholder for Phase 4</span>
-                </span>
-              </label>
+              {methods.cod !== false ? (
+                <label className="flex min-h-11 items-start gap-3 border border-gold/40 bg-gold/5 p-3">
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={form.paymentMethod === 'cod'}
+                    onChange={() => update('paymentMethod', 'cod')}
+                    className="mt-1 accent-gold"
+                  />
+                  <span>
+                    <span className="block text-ivory">Cash on Delivery</span>
+                    <span className="text-sm text-muted">Pay when your order arrives</span>
+                  </span>
+                </label>
+              ) : null}
+              {methods.online ? (
+                <label className="flex min-h-11 items-start gap-3 border border-border p-3">
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={form.paymentMethod === 'online'}
+                    onChange={() => update('paymentMethod', 'online')}
+                    className="mt-1 accent-gold"
+                  />
+                  <span>
+                    <span className="block text-ivory">Online payment</span>
+                    <span className="text-sm text-muted">
+                      We will confirm payment instructions after your order is placed.
+                    </span>
+                  </span>
+                </label>
+              ) : null}
+              {!methods.cod && !methods.online ? (
+                <p className="text-sm text-muted">
+                  Checkout payments are currently unavailable. Please contact the store.
+                </p>
+              ) : null}
             </div>
           </section>
         </div>
@@ -327,11 +363,11 @@ export default function CheckoutPage() {
               <dd className="text-gold-bright">{formatPrice(total)}</dd>
             </div>
           </dl>
-          <Button type="submit" className="mt-6 hidden w-full lg:inline-flex" disabled={submitting}>
+          <Button type="submit" className="mt-6 hidden w-full lg:inline-flex" disabled={submitting || !canPay}>
             {submitting ? 'Placing order...' : 'Place order'}
           </Button>
           <p className="mt-3 hidden text-xs text-muted lg:block">
-            Prototype checkout — no real payment is processed.
+            Cash on Delivery orders are paid when the courier arrives.
           </p>
         </aside>
       </form>
@@ -342,7 +378,7 @@ export default function CheckoutPage() {
             <p className="text-xs text-muted">Total</p>
             <p className="truncate text-gold-bright">{formatPrice(total)}</p>
           </div>
-          <Button type="submit" form="checkout-form" className="shrink-0" disabled={submitting}>
+          <Button type="submit" form="checkout-form" className="shrink-0" disabled={submitting || !canPay}>
             {submitting ? 'Placing…' : 'Place order'}
           </Button>
         </div>

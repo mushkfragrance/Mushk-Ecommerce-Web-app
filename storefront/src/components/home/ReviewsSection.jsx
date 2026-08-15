@@ -1,21 +1,41 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { SectionHeader } from '../ui/PageHero'
 import StarRating from '../ui/StarRating'
-import { reviews } from '../../data/content'
+import { storeApi } from '../../lib/services'
 
 export default function ReviewsSection() {
+  const [reviews, setReviews] = useState([])
+
+  useEffect(() => {
+    let alive = true
+    storeApi
+      .reviews()
+      .then(({ data }) => {
+        if (alive) setReviews((data.data || []).slice(0, 3))
+      })
+      .catch(() => {
+        if (alive) setReviews([])
+      })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  if (!reviews.length) return null
+
   return (
     <section className="border-y border-border bg-charcoal/40">
       <div className="container-site section-pad py-12 sm:py-16 md:py-20">
         <SectionHeader
           title="Customer reviews"
-          description="Real impressions from customers across Pakistan."
+          description="Approved reviews from Mushk Fragrance customers."
           align="center"
         />
         <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
-          {reviews.slice(0, 3).map((review, index) => (
+          {reviews.map((review, index) => (
             <motion.blockquote
-              key={review.id}
+              key={review._id || review.id}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -26,7 +46,8 @@ export default function ReviewsSection() {
               <p className="mt-4 font-display text-lg text-ivory sm:text-xl">{review.title}</p>
               <p className="mt-3 text-sm leading-relaxed text-muted">“{review.body}”</p>
               <footer className="mt-5 text-xs uppercase tracking-[0.16em] text-gold">
-                {review.name} · {review.city}
+                {review.customerName}
+                {review.product?.name ? ` · ${review.product.name}` : ''}
               </footer>
             </motion.blockquote>
           ))}

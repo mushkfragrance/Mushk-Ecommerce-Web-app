@@ -1,5 +1,5 @@
-import { fragranceFamilies, bottleSizes } from '../../data/categories'
 import Button from '../ui/Button'
+import { useFamilies } from '../../hooks/useCatalog'
 
 const genders = [
   { value: '', label: 'All' },
@@ -8,7 +8,14 @@ const genders = [
   { value: 'unisex', label: 'Unisex' },
 ]
 
-export default function FilterSidebar({ filters, onChange, onClear, mobile = false }) {
+export default function FilterSidebar({
+  filters,
+  onChange,
+  onClear,
+  mobile = false,
+  bottleSizes = [],
+}) {
+  const fragranceFamilies = useFamilies()
   const update = (patch) => onChange({ ...filters, ...patch, page: 1 })
 
   const toggleArrayValue = (key, value) => {
@@ -41,6 +48,7 @@ export default function FilterSidebar({ filters, onChange, onClear, mobile = fal
         </div>
       </div>
 
+      {fragranceFamilies.length ? (
       <div>
         <h3 className="mb-3 text-xs uppercase tracking-[0.22em] text-gold">Fragrance family</h3>
         <div className="space-y-2">
@@ -57,7 +65,9 @@ export default function FilterSidebar({ filters, onChange, onClear, mobile = fal
           ))}
         </div>
       </div>
+      ) : null}
 
+      {bottleSizes.length ? (
       <div>
         <h3 className="mb-3 text-xs uppercase tracking-[0.22em] text-gold">Bottle size</h3>
         <div className="flex flex-wrap gap-2">
@@ -77,6 +87,7 @@ export default function FilterSidebar({ filters, onChange, onClear, mobile = fal
           ))}
         </div>
       </div>
+      ) : null}
 
       <div>
         <h3 className="mb-3 text-xs uppercase tracking-[0.22em] text-gold">Price range (Rs.)</h3>

@@ -2,18 +2,28 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import Button from '../ui/Button'
+import { storeApi, getErrorMessage } from '../../lib/services'
 
 export default function NewsletterSection() {
   const [email, setEmail] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!email.includes('@')) {
       toast.error('Please enter a valid email')
       return
     }
-    toast.success('You are on the list — prototype signup saved locally for now.')
-    setEmail('')
+    setSubmitting(true)
+    try {
+      await storeApi.newsletter(email)
+      toast.success('You are on the list.')
+      setEmail('')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not subscribe'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -47,8 +57,8 @@ export default function NewsletterSection() {
             enterKeyHint="send"
             autoComplete="email"
           />
-          <Button type="submit" className="w-full sm:w-auto sm:shrink-0">
-            Subscribe
+          <Button type="submit" className="w-full sm:w-auto sm:shrink-0" disabled={submitting}>
+            {submitting ? 'Subscribing…' : 'Subscribe'}
           </Button>
         </form>
       </div>

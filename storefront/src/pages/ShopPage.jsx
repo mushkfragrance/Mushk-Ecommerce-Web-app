@@ -119,6 +119,16 @@ export default function ShopPage({ collection: collectionProp }) {
 
   const { products, meta: apiMeta, loading } = useProducts(apiParams)
 
+  const bottleSizes = useMemo(() => {
+    const sizes = new Set()
+    products.forEach((product) => {
+      product.variants?.forEach((variant) => {
+        if (variant.size) sizes.add(variant.size)
+      })
+    })
+    return [...sizes]
+  }, [products])
+
   // Client-side size filter (API may not filter sizes yet)
   const filtered = useMemo(() => {
     if (!filters.sizes?.length) return products
@@ -206,6 +216,7 @@ export default function ShopPage({ collection: collectionProp }) {
               filters={filters}
               onChange={syncFilters}
               onClear={() => setSearchParams({})}
+              bottleSizes={bottleSizes}
             />
           </div>
           <div>
@@ -223,6 +234,7 @@ export default function ShopPage({ collection: collectionProp }) {
         <FilterSidebar
           filters={filters}
           mobile
+          bottleSizes={bottleSizes}
           onChange={syncFilters}
           onClear={() => {
             setSearchParams({})

@@ -1,12 +1,17 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { CheckCircle2 } from 'lucide-react'
 import PageHero from '../components/ui/PageHero'
 import Breadcrumbs from '../components/ui/Breadcrumbs'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import { useAuthStore } from '../store'
 import { customerAuthApi, getErrorMessage } from '../lib/services'
+
+function readCustomer(payload) {
+  return payload?.data?.customer || payload?.data?.user || payload?.customer || null
+}
 
 export function LoginPage() {
   const login = useAuthStore((s) => s.login)
@@ -24,10 +29,15 @@ export function LoginPage() {
     setLoading(true)
     try {
       const { data } = await customerAuthApi.login({ email, password })
+      const customer = readCustomer(data)
+      if (!customer?.email) {
+        toast.error('Sign in succeeded but the account could not be loaded')
+        return
+      }
       login({
-        email: data.data.customer.email,
-        name: data.data.customer.name,
-        id: data.data.customer.id,
+        email: customer.email,
+        name: customer.name,
+        id: customer.id || customer._id,
       })
       toast.success('Signed in')
       navigate('/account')
@@ -73,11 +83,11 @@ export function LoginPage() {
 
 export function RegisterPage() {
   const registerUser = useAuthStore((s) => s.register)
-  const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [created, setCreated] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -88,18 +98,53 @@ export function RegisterPage() {
     setLoading(true)
     try {
       const { data } = await customerAuthApi.register({ name, email, password })
+      const customer = readCustomer(data)
+      if (!customer?.email) {
+        toast.error('Account was created but could not be loaded. Please sign in.')
+        return
+      }
       registerUser({
-        name: data.data.customer.name,
-        email: data.data.customer.email,
-        id: data.data.customer.id,
+        name: customer.name,
+        email: customer.email,
+        id: customer.id || customer._id,
       })
-      toast.success('Account created')
-      navigate('/account')
+      setCreated({
+        name: customer.name || name.trim(),
+        email: customer.email,
+      })
     } catch (error) {
       toast.error(getErrorMessage(error, 'Registration failed'))
     } finally {
       setLoading(false)
     }
+  }
+
+  if (created) {
+    return (
+      <AuthShell
+        title="Account created"
+        description="You are signed in and ready to shop Mushk Fragrance."
+      >
+        <div className="text-center">
+          <CheckCircle2 className="mx-auto text-gold" size={42} strokeWidth={1.4} />
+          <p className="mt-4 text-[10px] uppercase tracking-[0.22em] text-gold">Welcome</p>
+          <h2 className="mt-2 font-display text-2xl text-ivory">Account successfully created</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Hello{created.name ? `, ${created.name}` : ''}. Your Mushk Fragrance account is ready.
+            Signed-in orders will appear in your profile.
+          </p>
+          <p className="mt-4 truncate text-sm text-ivory">{created.email}</p>
+          <div className="mt-6 flex flex-col gap-3">
+            <Button to="/account" className="w-full">
+              Go to my account
+            </Button>
+            <Button to="/shop" variant="secondary" className="w-full">
+              Shop the collection
+            </Button>
+          </div>
+        </div>
+      </AuthShell>
+    )
   }
 
   return (
@@ -131,32 +176,41 @@ export function RegisterPage() {
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!email.includes('@')) {
       toast.error('Enter a valid email')
       return
     }
-    setSent(true)
-    toast.success('Reset link simulated — check back in Phase 3 for real email flow')
+    setLoading(true)
+    try {
+      await customerAuthApi.forgotPassword(email)
+      setSent(true)
+      toast.success('If that email exists, a reset link will be sent.')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not send reset link'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <AuthShell
       title="Forgot password"
-      description="Enter your email and we will simulate a password reset request."
+      description="Enter your email and we will send a password reset link if an account exists."
     >
       {sent ? (
         <div className="border border-border bg-ink/40 p-4 text-sm text-muted">
-          If an account exists for <span className="text-ivory">{email}</span>, a reset link would be
-          sent. This is a UI prototype only.
+          If an account exists for <span className="text-ivory">{email}</span>, a reset link will be
+          sent. Check your inbox and spam folder.
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input id="email" label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Button type="submit" className="w-full">
-            Send reset link
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Sending…' : 'Send reset link'}
           </Button>
         </form>
       )}
@@ -165,6 +219,65 @@ export function ForgotPasswordPage() {
           Back to login
         </Link>
       </p>
+    </AuthShell>
+  )
+}
+
+export function ResetPasswordPage() {
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
+  const token = params.get('token') || ''
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+    if (password !== confirm) {
+      toast.error('Passwords do not match')
+      return
+    }
+    if (!token) {
+      toast.error('This reset link is invalid')
+      return
+    }
+    setLoading(true)
+    try {
+      await customerAuthApi.resetPassword({ token, password })
+      toast.success('Password updated. Sign in with your new password.')
+      navigate('/login')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not reset password'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <AuthShell title="Reset password" description="Choose a new password for your account.">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          id="password"
+          label="New password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <Input
+          id="confirm"
+          label="Confirm password"
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+        />
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Updating…' : 'Update password'}
+        </Button>
+      </form>
     </AuthShell>
   )
 }

@@ -12,19 +12,7 @@ import { customerAuthApi, getErrorMessage } from '../lib/services'
 import { useAuthStore } from '../store'
 import { Package } from 'lucide-react'
 
-function RequireAuth({ children }) {
-  const user = useAuthStore((s) => s.user)
-
-  useEffect(() => {
-    if (!user) toast.error('Please sign in to view your account')
-  }, [user])
-
-  if (!user) return <Navigate to="/login" replace />
-  return children
-}
-
 function useMyOrders() {
-  const logout = useAuthStore((s) => s.logout)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -33,14 +21,14 @@ function useMyOrders() {
     customerAuthApi
       .myOrders()
       .then(({ data }) => {
-        if (alive) setOrders((data.data || []).map(normalizeOrder))
+        const list = Array.isArray(data?.data) ? data.data : []
+        if (alive) setOrders(list.map(normalizeOrder).filter(Boolean))
       })
       .catch((error) => {
-        if (error?.response?.status === 401) {
-          logout()
-          return
+        if (error?.response?.status !== 401) {
+          toast.error(getErrorMessage(error, 'Could not load orders'))
         }
-        toast.error(getErrorMessage(error, 'Could not load orders'))
+        if (alive) setOrders([])
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -48,7 +36,7 @@ function useMyOrders() {
     return () => {
       alive = false
     }
-  }, [logout])
+  }, [])
 
   return { orders, loading }
 }
@@ -100,11 +88,13 @@ export function AccountPage() {
   const { orders, loading } = useMyOrders()
   const recent = orders.slice(0, 2)
 
+  if (!user) return <Navigate to="/login" replace />
+
   return (
-    <RequireAuth>
+    <>
       <PageHero
         eyebrow="Account"
-        title={`Hello, ${user?.name}`}
+        title={`Hello, ${user.name || 'there'}`}
         description="Manage your profile and review recent orders."
         crumbs={<Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'Account' }]} />}
       />
@@ -116,11 +106,11 @@ export function AccountPage() {
             <dl className="mt-4 space-y-2 text-sm text-muted">
               <div className="flex justify-between gap-4">
                 <dt>Name</dt>
-                <dd className="text-ivory">{user.name}</dd>
+                <dd className="text-ivory">{user.name || '—'}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt>Email</dt>
-                <dd className="text-ivory">{user.email}</dd>
+                <dd className="text-ivory">{user.email || '—'}</dd>
               </div>
             </dl>
           </section>
@@ -159,15 +149,18 @@ export function AccountPage() {
           </section>
         </div>
       </div>
-    </RequireAuth>
+    </>
   )
 }
 
 export function OrdersPage() {
+  const user = useAuthStore((s) => s.user)
   const { orders, loading } = useMyOrders()
 
+  if (!user) return <Navigate to="/login" replace />
+
   return (
-    <RequireAuth>
+    <>
       <PageHero
         eyebrow="Orders"
         title="Order history"
@@ -196,7 +189,7 @@ export function OrdersPage() {
                 <div>
                   <p className="font-display text-xl text-ivory">{order.id}</p>
                   <p className="mt-1 text-sm text-muted">
-                    {order.date} · {order.items.length} item(s)
+                    {order.date} · {(order.items || []).length} item(s)
                   </p>
                 </div>
                 <div className="text-right">
@@ -216,27 +209,27 @@ export function OrdersPage() {
           />
         )}
       </div>
-    </RequireAuth>
+    </>
   )
 }
 
 export function OrderDetailsPage() {
+  const user = useAuthStore((s) => s.user)
   const { id } = useParams()
   const { orders, loading } = useMyOrders()
   const order = orders.find((o) => o.id === id)
 
+  if (!user) return <Navigate to="/login" replace />
+
   if (loading) {
     return (
-      <RequireAuth>
-        <div className="container-site section-pad py-16 text-sm text-muted">Loading order…</div>
-      </RequireAuth>
+      <div className="container-site section-pad py-16 text-sm text-muted">Loading order…</div>
     )
   }
 
   if (!order) {
     return (
-      <RequireAuth>
-        <div className="container-site section-pad py-16">
+      <div className="container-site section-pad py-16">
           <EmptyState
             icon={Package}
             title="Order not found"
@@ -245,12 +238,11 @@ export function OrderDetailsPage() {
             actionTo="/account/orders"
           />
         </div>
-      </RequireAuth>
     )
   }
 
   return (
-    <RequireAuth>
+    <>
       <PageHero
         eyebrow="Order"
         title={order.id}
@@ -270,7 +262,7 @@ export function OrderDetailsPage() {
         <section className="border border-border p-5">
           <h2 className="font-display text-xl text-ivory">Items</h2>
           <ul className="mt-4 space-y-3">
-            {order.items.map((item) => (
+            {(order.items || []).map((item) => (
               <li key={`${item.name}-${item.size}`} className="flex justify-between gap-3 text-sm">
                 <span className="text-muted">
                   {item.name} · {item.size} × {item.qty}
@@ -296,13 +288,13 @@ export function OrderDetailsPage() {
           <div>
             <h3 className="text-ivory">Shipping address</h3>
             <p className="mt-2">
-              {order.shippingAddress.name}
+              {order.shippingAddress?.name}
               <br />
-              {order.shippingAddress.address}
+              {order.shippingAddress?.address}
               <br />
-              {order.shippingAddress.area}, {order.shippingAddress.city}
+              {order.shippingAddress?.area}, {order.shippingAddress?.city}
               <br />
-              {order.shippingAddress.phone}
+              {order.shippingAddress?.phone}
             </p>
           </div>
           <Button to="/account/orders" variant="secondary">
@@ -310,6 +302,6 @@ export function OrderDetailsPage() {
           </Button>
         </section>
       </div>
-    </RequireAuth>
+    </>
   )
 }

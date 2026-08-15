@@ -17,6 +17,7 @@ const WishlistPage = lazy(() => import('./pages/WishlistPage'))
 const LoginPage = lazyNamed(() => import('./pages/AuthPages'), 'LoginPage')
 const RegisterPage = lazyNamed(() => import('./pages/AuthPages'), 'RegisterPage')
 const ForgotPasswordPage = lazyNamed(() => import('./pages/AuthPages'), 'ForgotPasswordPage')
+const ResetPasswordPage = lazyNamed(() => import('./pages/AuthPages'), 'ResetPasswordPage')
 
 const AccountPage = lazyNamed(() => import('./pages/AccountPages'), 'AccountPage')
 const OrdersPage = lazyNamed(() => import('./pages/AccountPages'), 'OrdersPage')
@@ -33,7 +34,10 @@ const NotFoundPage = lazyNamed(() => import('./pages/ContentPages'), 'NotFoundPa
 
 function RouteFallback() {
   return (
-    <div className="container-site section-pad py-20 text-center text-muted">Loading…</div>
+    <div className="container-site section-pad flex min-h-[50vh] flex-col items-center justify-center py-20 text-center">
+      <p className="text-xs uppercase tracking-[0.28em] text-gold">Mushk Fragrance</p>
+      <p className="mt-3 font-display text-2xl text-ivory">Loading…</p>
+    </div>
   )
 }
 
@@ -55,6 +59,7 @@ export default function App() {
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="account/orders" element={<OrdersPage />} />
             <Route path="account/orders/:id" element={<OrderDetailsPage />} />

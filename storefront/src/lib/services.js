@@ -25,6 +25,7 @@ export const customerAuthApi = {
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (payload) => api.post('/auth/reset-password', payload),
   myOrders: () => api.get('/account/orders'),
 }
 

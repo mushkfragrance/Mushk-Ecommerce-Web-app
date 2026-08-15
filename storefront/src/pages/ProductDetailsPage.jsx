@@ -10,7 +10,6 @@ import Button from '../components/ui/Button'
 import StarRating from '../components/ui/StarRating'
 import EmptyState from '../components/ui/EmptyState'
 import Seo, { buildProductJsonLd } from '../components/seo/Seo'
-import { reviews } from '../data/content'
 import { formatPrice, getVariantPrice, discountPercent } from '../lib/format'
 import { useCartStore, useRecentlyViewedStore, useWishlistStore } from '../store'
 import { useProductBySlug, useProducts } from '../hooks/useCatalog'
@@ -36,6 +35,7 @@ export default function ProductDetailsPage() {
   const [tab, setTab] = useState('details')
   const [deliveryText, setDeliveryText] = useState(DEFAULT_DELIVERY)
   const [returnsText, setReturnsText] = useState(DEFAULT_RETURNS)
+  const [productReviews, setProductReviews] = useState([])
 
   useEffect(() => {
     if (product) {
@@ -63,6 +63,25 @@ export default function ProductDetailsPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!product?.id) {
+      setProductReviews([])
+      return undefined
+    }
+    let active = true
+    storeApi
+      .reviews({ productId: product.id })
+      .then(({ data }) => {
+        if (active) setProductReviews(data.data || [])
+      })
+      .catch(() => {
+        if (active) setProductReviews([])
+      })
+    return () => {
+      active = false
+    }
+  }, [product?.id])
+
   const variant = useMemo(
     () => product?.variants.find((v) => v.size === (size || product.variants[0]?.size)),
     [product, size],
@@ -89,7 +108,6 @@ export default function ProductDetailsPage() {
   const price = getVariantPrice(variant)
   const discount = discountPercent(price, variant?.compareAtPrice)
   const soldOut = !variant?.stock
-  const productReviews = reviews.filter((r) => r.productSlug === product.slug)
   const related = relatedPool
     .filter(
       (p) =>
@@ -327,10 +345,13 @@ export default function ProductDetailsPage() {
             <div className="max-w-3xl space-y-4">
               {productReviews.length ? (
                 productReviews.map((review) => (
-                  <article key={review.id} className="border border-border p-4">
+                  <article key={review._id || review.id} className="border border-border p-4">
                     <StarRating rating={review.rating} />
                     <h3 className="mt-2 text-ivory">{review.title}</h3>
                     <p className="mt-2">{review.body}</p>
+                    <p className="mt-3 text-xs uppercase tracking-[0.16em] text-gold">
+                      {review.customerName}
+                    </p>
                   </article>
                 ))
               ) : (

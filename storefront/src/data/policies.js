@@ -17,7 +17,7 @@ export const policies = {
       },
       {
         heading: 'Order tracking',
-        body: 'Once your order is shipped, tracking details will be shared by SMS or email. During this prototype phase, tracking is simulated for demonstration only.',
+        body: 'Once your order is shipped, tracking details will be shared by SMS or email.',
       },
     ],
   },

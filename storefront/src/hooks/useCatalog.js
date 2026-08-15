@@ -85,6 +85,24 @@ export function useCategories() {
   return categories
 }
 
+export function useFamilies() {
+  const [families, setFamilies] = useState([])
+  useEffect(() => {
+    storeApi
+      .families()
+      .then(({ data }) => {
+        setFamilies(
+          (data.data || []).map((family) => ({
+            ...family,
+            id: family._id || family.id,
+          })),
+        )
+      })
+      .catch(() => {})
+  }, [])
+  return families
+}
+
 const HOMEPAGE_CACHE_KEY = 'mushk-homepage-media'
 
 function emptyHomepage() {

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Music2 } from 'lucide-react'
 import { brand } from '../../lib/brand'
 import { storeApi } from '../../lib/services'
+import { useStoreSettings } from '../../hooks/useStoreSettings'
 
 function InstagramIcon({ size = 16 }) {
   return (
@@ -35,6 +36,10 @@ const helpLinks = [
 ]
 
 export default function Footer() {
+  const { settings } = useStoreSettings()
+  const email = settings?.email || brand.contact.email
+  const phone = settings?.phone || brand.contact.phone
+  const address = settings?.address || brand.contact.address
   const [shopLinks, setShopLinks] = useState([
     { to: '/shop', label: 'Shop All' },
     { to: '/shop/best-sellers', label: 'Best Sellers' },
@@ -137,16 +142,16 @@ export default function Footer() {
           <h3 className="mb-3 text-xs uppercase tracking-[0.22em] text-gold sm:mb-4">Contact</h3>
           <ul className="space-y-2.5 text-sm text-muted">
             <li>
-              <a href={`mailto:${brand.contact.email}`} className="hover:text-gold-bright">
-                {brand.contact.email}
+              <a href={`mailto:${email}`} className="hover:text-gold-bright">
+                {email}
               </a>
             </li>
             <li>
-              <a href={`tel:${brand.contact.phone.replace(/\s/g, '')}`} className="hover:text-gold-bright">
-                {brand.contact.phone}
+              <a href={`tel:${phone.replace(/\s/g, '')}`} className="hover:text-gold-bright">
+                {phone}
               </a>
             </li>
-            <li>{brand.contact.address}</li>
+            <li>{address}</li>
             <li>
               <Link to="/about" className="hover:text-gold-bright">
                 About the brand

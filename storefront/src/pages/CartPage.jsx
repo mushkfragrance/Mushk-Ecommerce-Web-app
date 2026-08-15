@@ -10,25 +10,60 @@ import Input from '../components/ui/Input'
 import Seo from '../components/seo/Seo'
 import { formatPrice } from '../lib/format'
 import { useCartStore } from '../store'
+import { storeApi, getErrorMessage } from '../lib/services'
+import { useStoreSettings } from '../hooks/useStoreSettings'
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items)
   const updateQuantity = useCartStore((s) => s.updateQuantity)
   const removeItem = useCartStore((s) => s.removeItem)
-  const applyPromo = useCartStore((s) => s.applyPromo)
+  const setPromo = useCartStore((s) => s.setPromo)
   const clearPromo = useCartStore((s) => s.clearPromo)
   const promoCode = useCartStore((s) => s.promoCode)
   const getSubtotal = useCartStore((s) => s.getSubtotal)
   const getDiscount = useCartStore((s) => s.getDiscount)
   const getShipping = useCartStore((s) => s.getShipping)
   const getTotal = useCartStore((s) => s.getTotal)
+  const { settings } = useStoreSettings()
 
   const [code, setCode] = useState('')
+  const [applying, setApplying] = useState(false)
 
+  const threshold = settings?.freeShippingThreshold ?? 8000
+  const defaultFee = settings?.shippingCities?.[0]?.fee ?? 250
   const subtotal = getSubtotal()
   const discount = getDiscount()
-  const shipping = getShipping()
-  const total = getTotal()
+  const shipping = getShipping(defaultFee, threshold)
+  const total = getTotal(defaultFee, threshold)
+
+  const handleApplyPromo = async () => {
+    if (!code.trim()) {
+      toast.error('Enter a coupon code')
+      return
+    }
+    setApplying(true)
+    try {
+      const { data } = await storeApi.validateCoupon({ code, subtotal })
+      const promo = data.data
+      setPromo({
+        code: promo.code,
+        type: promo.type,
+        value: promo.value,
+        discount: promo.discount,
+        freeShipping: promo.freeShipping,
+        label: promo.freeShipping
+          ? 'Free shipping'
+          : promo.type === 'percent'
+            ? `${promo.value}% off`
+            : `Rs. ${promo.value} off`,
+      })
+      toast.success('Coupon applied')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Invalid coupon code'))
+    } finally {
+      setApplying(false)
+    }
+  }
 
   if (!items.length) {
     return (
@@ -163,7 +198,7 @@ export default function CartPage() {
             <Input
               id="promo"
               label="Promo code"
-              placeholder="WELCOME10 / MUSHK20 / FREESHIP"
+              placeholder="Enter coupon code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
@@ -171,13 +206,10 @@ export default function CartPage() {
               <Button
                 className="flex-1"
                 variant="secondary"
-                onClick={() => {
-                  const result = applyPromo(code)
-                  if (result.ok) toast.success(result.message)
-                  else toast.error(result.message)
-                }}
+                disabled={applying}
+                onClick={handleApplyPromo}
               >
-                Apply
+                {applying ? 'Checking…' : 'Apply'}
               </Button>
               {promoCode ? (
                 <Button variant="ghost" onClick={clearPromo}>

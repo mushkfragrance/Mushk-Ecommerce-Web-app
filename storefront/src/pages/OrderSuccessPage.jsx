@@ -15,8 +15,8 @@ export default function OrderSuccessPage() {
         <CheckCircle2 className="mx-auto text-gold" size={42} strokeWidth={1.4} />
         <h1 className="mt-4 font-display text-3xl text-ivory">Order placed</h1>
         <p className="mt-3 text-sm text-muted">
-          Thank you for shopping with Mushk Fragrance. This is a prototype confirmation — no payment
-          was charged.
+          Thank you for shopping with Mushk Fragrance. We have received your order and will confirm
+          it shortly. Cash on Delivery orders are paid when the courier arrives.
         </p>
         <p className="mt-5 text-xs uppercase tracking-[0.22em] text-gold">
           Order {order?.id || orderId || 'MF-XXXXX'}

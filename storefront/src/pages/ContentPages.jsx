@@ -8,6 +8,8 @@ import Seo from '../components/seo/Seo'
 import { faqs } from '../data/content'
 import { policies } from '../data/policies'
 import { brand } from '../lib/brand'
+import { storeApi, getErrorMessage } from '../lib/services'
+import { useStoreSettings } from '../hooks/useStoreSettings'
 
 export function AboutPage() {
   return (
@@ -49,15 +51,29 @@ export function AboutPage() {
 
 export function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
+  const [submitting, setSubmitting] = useState(false)
+  const { settings } = useStoreSettings()
+  const email = settings?.email || brand.contact.email
+  const phone = settings?.phone || brand.contact.phone
+  const whatsapp = settings?.whatsapp || brand.contact.whatsapp
+  const address = settings?.address || brand.contact.address
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.email.includes('@') || !form.message.trim()) {
+    if (!form.name.trim() || !form.email.includes('@') || form.message.trim().length < 5) {
       toast.error('Please complete the required fields')
       return
     }
-    toast.success('Message received — we will respond shortly')
-    setForm({ name: '', email: '', phone: '', message: '' })
+    setSubmitting(true)
+    try {
+      await storeApi.contact(form)
+      toast.success('Message received — we will respond shortly')
+      setForm({ name: '', email: '', phone: '', message: '' })
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not send message'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -101,28 +117,30 @@ export function ContactPage() {
             value={form.message}
             onChange={(e) => setForm({ ...form, message: e.target.value })}
           />
-          <Button type="submit">Send message</Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? 'Sending…' : 'Send message'}
+          </Button>
         </form>
         <div className="border border-border bg-charcoal p-5 text-sm text-muted">
           <h2 className="font-display text-xl text-ivory">Reach us directly</h2>
           <ul className="mt-4 space-y-3">
             <li>
               Email:{' '}
-              <a href={`mailto:${brand.contact.email}`} className="text-gold hover:text-gold-bright">
-                {brand.contact.email}
+              <a href={`mailto:${email}`} className="text-gold hover:text-gold-bright">
+                {email}
               </a>
             </li>
             <li>
               Phone:{' '}
               <a
-                href={`tel:${brand.contact.phone.replace(/\s/g, '')}`}
+                href={`tel:${phone.replace(/\s/g, '')}`}
                 className="text-gold hover:text-gold-bright"
               >
-                {brand.contact.phone}
+                {phone}
               </a>
             </li>
-            <li>WhatsApp: {brand.contact.whatsapp}</li>
-            <li>Location: {brand.contact.address}</li>
+            <li>WhatsApp: {whatsapp}</li>
+            <li>Location: {address}</li>
           </ul>
         </div>
       </div>
