@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Plus } from 'lucide-react'
 import { Badge, Button, Card, EmptyRow, Input, Modal, PageHeader, Select, Table } from '../components/ui'
-import { isLowStock, totalStock } from '../data/catalog'
 import { useAdminDataStore } from '../store'
+import { productsApi, getErrorMessage } from '../lib/services'
 
 export function CategoriesPage() {
   const categories = useAdminDataStore((s) => s.categories)
@@ -170,31 +170,58 @@ export function FamiliesPage() {
 }
 
 export function InventoryPage() {
-  const products = useAdminDataStore((s) => s.products)
-  const settings = useAdminDataStore((s) => s.settings)
-  const upsertProduct = useAdminDataStore((s) => s.upsertProduct)
+  const [rows, setRows] = useState([])
+  const [threshold, setThreshold] = useState(8)
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [busyKey, setBusyKey] = useState('')
 
-  const rows = products.flatMap((product) =>
-    product.variants.map((variant) => ({
-      product,
-      variant,
-      low: variant.stock > 0 && variant.stock <= settings.lowStockThreshold,
-      out: variant.stock <= 0,
-    })),
+  const load = useCallback(async (showSpinner = true) => {
+    if (showSpinner) setLoading(true)
+    try {
+      const { data } = await productsApi.inventory()
+      setRows(data.data || [])
+      setThreshold(data.meta?.lowStockThreshold ?? 8)
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to load inventory'))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const filtered = useMemo(
+    () =>
+      rows.filter((row) => {
+        if (filter === 'low') return row.low
+        if (filter === 'out') return row.out
+        return true
+      }),
+    [rows, filter],
   )
 
-  const filtered = rows.filter((row) => {
-    if (filter === 'low') return row.low
-    if (filter === 'out') return row.out
-    return true
-  })
+  const adjust = async (row, delta) => {
+    const key = `${row.productId}-${row.sku}`
+    setBusyKey(key)
+    try {
+      await productsApi.adjustStock(row.productId, { sku: row.sku, delta })
+      toast.success(delta > 0 ? `+${delta} stock` : `${delta} stock`)
+      await load(false)
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not update stock'))
+    } finally {
+      setBusyKey('')
+    }
+  }
 
   return (
     <div>
       <PageHeader
         title="Inventory"
-        description={`Stock tracked per bottle size. Low-stock threshold: ${settings.lowStockThreshold}.`}
+        description={`Live stock per bottle size from Atlas. Low-stock threshold: ${threshold}.`}
         actions={
           <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="min-w-40">
             <option value="all">All variants</option>
@@ -204,64 +231,60 @@ export function InventoryPage() {
         }
       />
       <Card>
-        <Table headers={['Product', 'Size / SKU', 'Stock', 'Status', 'Quick adjust']}>
-          {filtered.map(({ product, variant, low, out }) => (
-            <tr key={`${product.id}-${variant.sku}`} className="border-b border-line last:border-0">
-              <td className="px-3 py-3 font-medium">
-                {product.name}
-                <p className="text-xs text-muted">Total {totalStock(product)}</p>
-              </td>
-              <td className="px-3 py-3">
-                {variant.size}
-                <p className="text-xs text-muted">{variant.sku}</p>
-              </td>
-              <td className="px-3 py-3">{variant.stock}</td>
-              <td className="px-3 py-3">
-                {out ? (
-                  <Badge tone="danger">Out</Badge>
-                ) : low || isLowStock(product, settings.lowStockThreshold) ? (
-                  <Badge tone="warning">Low</Badge>
-                ) : (
-                  <Badge tone="success">OK</Badge>
-                )}
-              </td>
-              <td className="px-3 py-3">
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => {
-                      upsertProduct({
-                        ...product,
-                        variants: product.variants.map((v) =>
-                          v.sku === variant.sku ? { ...v, stock: v.stock + 5 } : v,
-                        ),
-                      })
-                      toast.success('+5 stock')
-                    }}
-                  >
-                    +5
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      upsertProduct({
-                        ...product,
-                        variants: product.variants.map((v) =>
-                          v.sku === variant.sku ? { ...v, stock: Math.max(0, v.stock - 1) } : v,
-                        ),
-                      })
-                      toast.success('-1 stock')
-                    }}
-                  >
-                    -1
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </Table>
+        {loading ? (
+          <p className="px-3 py-8 text-sm text-muted">Loading inventory…</p>
+        ) : filtered.length ? (
+          <Table headers={['Product', 'Size / SKU', 'Stock', 'Status', 'Quick adjust']}>
+            {filtered.map((row) => {
+                const key = `${row.productId}-${row.sku}`
+                const busy = busyKey === key
+                return (
+                  <tr key={key} className="border-b border-line last:border-0">
+                    <td className="px-3 py-3 font-medium">
+                      {row.productName}
+                      <p className="text-xs text-muted">Total {row.totalStock}</p>
+                    </td>
+                    <td className="px-3 py-3">
+                      {row.size}
+                      <p className="text-xs text-muted">{row.sku}</p>
+                    </td>
+                    <td className="px-3 py-3">{row.stock}</td>
+                    <td className="px-3 py-3">
+                      {row.out ? (
+                        <Badge tone="danger">Out</Badge>
+                      ) : row.low ? (
+                        <Badge tone="warning">Low</Badge>
+                      ) : (
+                        <Badge tone="success">OK</Badge>
+                      )}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => adjust(row, 5)}
+                        >
+                          +5
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy || row.stock <= 0}
+                          onClick={() => adjust(row, -1)}
+                        >
+                          -1
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+          </Table>
+        ) : (
+          <EmptyRow message="No products yet. Add stock from Products, then it appears here." />
+        )}
       </Card>
     </div>
   )

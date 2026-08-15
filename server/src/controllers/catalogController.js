@@ -82,18 +82,48 @@ const deleteProduct = asyncHandler(async (req, res) => {
 const getInventory = asyncHandler(async (req, res) => {
   const settings = await getSettings();
   const products = await Product.find().sort({ name: 1 });
-  const rows = products.flatMap((product) =>
-    product.variants.map((variant) => ({
+  const rows = products.flatMap((product) => {
+    const total = product.variants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
+    return product.variants.map((variant) => ({
       productId: product._id,
       productName: product.name,
+      productStatus: product.status,
+      totalStock: total,
       size: variant.size,
       sku: variant.sku,
       stock: variant.stock,
       low: variant.stock > 0 && variant.stock <= settings.lowStockThreshold,
       out: variant.stock <= 0,
-    })),
-  );
+    }));
+  });
   sendSuccess(res, { data: rows, meta: { lowStockThreshold: settings.lowStockThreshold } });
+});
+
+const adjustStock = asyncHandler(async (req, res) => {
+  const sku = String(req.body?.sku || '').trim();
+  const delta = Number(req.body?.delta);
+  if (!sku) throw new ApiError(400, 'SKU is required');
+  if (!Number.isFinite(delta) || !Number.isInteger(delta)) {
+    throw new ApiError(400, 'delta must be an integer');
+  }
+
+  const product = await Product.findById(req.params.id);
+  if (!product) throw new ApiError(404, 'Product not found');
+  const variant = product.variants.find((v) => v.sku === sku);
+  if (!variant) throw new ApiError(404, 'Variant not found');
+
+  variant.stock = Math.max(0, Number(variant.stock || 0) + delta);
+  await product.save();
+
+  await logActivity({
+    actorType: 'admin',
+    actorId: req.user._id,
+    actorName: req.user.name,
+    action: 'Adjusted inventory',
+    target: `${product.name} ${variant.size} (${variant.sku}) → ${variant.stock}`,
+  });
+
+  sendSuccess(res, { message: 'Stock updated', data: product });
 });
 
 const listCategories = asyncHandler(async (req, res) => {
@@ -165,6 +195,7 @@ module.exports = {
   archiveProduct,
   deleteProduct,
   getInventory,
+  adjustStock,
   listCategories,
   upsertCategory,
   deleteCategory,

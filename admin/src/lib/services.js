@@ -20,6 +20,7 @@ export const productsApi = {
   archive: (id) => api.patch(`/admin/products/${id}/archive`),
   remove: (id) => api.delete(`/admin/products/${id}`),
   inventory: () => api.get('/admin/inventory'),
+  adjustStock: (id, payload) => api.patch(`/admin/products/${id}/stock`, payload),
 }
 
 export const categoriesApi = {
