@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   Badge,
@@ -12,7 +12,7 @@ import {
   Table,
 } from '../components/ui'
 import { ORDER_STATUSES, PAYMENT_STATUSES, formatDate, formatPrice } from '../lib/utils'
-import { useAdminDataStore } from '../store'
+import { customersApi, getErrorMessage, ordersApi } from '../lib/services'
 
 function statusTone(status) {
   if (status === 'Delivered' || status === 'Paid') return 'success'
@@ -21,26 +21,39 @@ function statusTone(status) {
   return 'info'
 }
 
+function orderId(order) {
+  return order._id || order.id
+}
+
 export function OrdersPage() {
-  const orders = useAdminDataStore((s) => s.orders)
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
 
-  const filtered = useMemo(() => {
-    return orders.filter((order) => {
-      const q = query.toLowerCase()
-      const matchesQuery =
-        order.id.toLowerCase().includes(q) ||
-        order.customer.name.toLowerCase().includes(q) ||
-        order.city.toLowerCase().includes(q)
-      const matchesStatus = status === 'all' || order.status === status
-      return matchesQuery && matchesStatus
-    })
-  }, [orders, query, status])
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await ordersApi.list({
+        limit: 100,
+        ...(status !== 'all' ? { status } : {}),
+        ...(query.trim() ? { q: query.trim() } : {}),
+      })
+      setOrders(data.data || [])
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to load orders'))
+    } finally {
+      setLoading(false)
+    }
+  }, [query, status])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   return (
     <div>
-      <PageHeader title="Orders" description="Manage fulfillment and payment statuses separately." />
+      <PageHeader title="Orders" description="Live orders from the storefront." />
       <Card>
         <div className="mb-4 grid gap-3 sm:grid-cols-2">
           <Input
@@ -57,17 +70,19 @@ export function OrdersPage() {
             ))}
           </Select>
         </div>
-        {filtered.length ? (
+        {loading ? (
+          <p className="py-8 text-sm text-muted">Loading orders…</p>
+        ) : orders.length ? (
           <Table headers={['Order', 'Customer', 'Order status', 'Payment', 'Total', '']}>
-            {filtered.map((order) => (
-              <tr key={order.id} className="border-b border-line last:border-0">
+            {orders.map((order) => (
+              <tr key={orderId(order)} className="border-b border-line last:border-0">
                 <td className="px-3 py-3">
-                  <p className="font-medium">{order.id}</p>
-                  <p className="text-xs text-muted">{formatDate(order.date)}</p>
+                  <p className="font-medium">{order.orderNumber}</p>
+                  <p className="text-xs text-muted">{formatDate(order.createdAt)}</p>
                 </td>
                 <td className="px-3 py-3">
-                  {order.customer.name}
-                  <p className="text-xs text-muted">{order.city}</p>
+                  {order.customerSnapshot?.name || 'Guest'}
+                  <p className="text-xs text-muted">{order.shippingAddress?.city}</p>
                 </td>
                 <td className="px-3 py-3">
                   <Badge tone={statusTone(order.status)}>{order.status}</Badge>
@@ -78,7 +93,7 @@ export function OrdersPage() {
                 </td>
                 <td className="px-3 py-3">{formatPrice(order.total)}</td>
                 <td className="px-3 py-3">
-                  <Link to={`/orders/${order.id}`} className="text-sm text-gold hover:underline">
+                  <Link to={`/orders/${orderId(order)}`} className="text-sm text-gold hover:underline">
                     Details
                   </Link>
                 </td>
@@ -86,7 +101,7 @@ export function OrdersPage() {
             ))}
           </Table>
         ) : (
-          <EmptyRow />
+          <EmptyRow message="No orders yet." />
         )}
       </Card>
     </div>
@@ -95,15 +110,54 @@ export function OrdersPage() {
 
 export function OrderDetailsPage() {
   const { id } = useParams()
-  const orders = useAdminDataStore((s) => s.orders)
-  const updateOrderStatus = useAdminDataStore((s) => s.updateOrderStatus)
-  const updatePaymentStatus = useAdminDataStore((s) => s.updatePaymentStatus)
-  const order = orders.find((o) => o.id === id)
+  const [order, setOrder] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await ordersApi.get(id)
+      setOrder(data.data)
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to load order'))
+      setOrder(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const changeStatus = async (status) => {
+    try {
+      const { data } = await ordersApi.updateStatus(id, { status })
+      setOrder(data.data)
+      toast.success('Order status updated')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not update order status'))
+    }
+  }
+
+  const changePayment = async (paymentStatus) => {
+    try {
+      const { data } = await ordersApi.updatePayment(id, { paymentStatus })
+      setOrder(data.data)
+      toast.success('Payment status updated')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Could not update payment status'))
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm text-muted">Loading order…</p>
+  }
 
   if (!order) {
     return (
       <Card>
-        <EmptyRow message="Order not found in mock data." />
+        <EmptyRow message="Order not found." />
         <div className="mt-4">
           <Link to="/orders" className="text-sm text-gold hover:underline">
             Back to orders
@@ -116,8 +170,8 @@ export function OrderDetailsPage() {
   return (
     <div>
       <PageHeader
-        title={order.id}
-        description={`Placed ${formatDate(order.date)}`}
+        title={order.orderNumber}
+        description={`Placed ${formatDate(order.createdAt)}`}
         actions={
           <Link to="/orders" className="text-sm text-gold hover:underline">
             Back to orders
@@ -127,7 +181,7 @@ export function OrderDetailsPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card title="Items" className="lg:col-span-2">
           <Table headers={['Item', 'Qty', 'Price']}>
-            {order.items.map((item) => (
+            {(order.items || []).map((item) => (
               <tr key={`${item.name}-${item.size}`} className="border-b border-line last:border-0">
                 <td className="px-3 py-3">
                   {item.name}
@@ -164,10 +218,7 @@ export function OrderDetailsPage() {
               <Select
                 label="Order status"
                 value={order.status}
-                onChange={(e) => {
-                  updateOrderStatus(order.id, e.target.value)
-                  toast.success('Order status updated')
-                }}
+                onChange={(e) => changeStatus(e.target.value)}
               >
                 {ORDER_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -178,10 +229,7 @@ export function OrderDetailsPage() {
               <Select
                 label="Payment status"
                 value={order.paymentStatus}
-                onChange={(e) => {
-                  updatePaymentStatus(order.id, e.target.value)
-                  toast.success('Payment status updated')
-                }}
+                onChange={(e) => changePayment(e.target.value)}
               >
                 {PAYMENT_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -197,16 +245,18 @@ export function OrderDetailsPage() {
           <Card title="Customer & shipping">
             <div className="space-y-2 text-sm text-muted">
               <p>
-                <span className="text-ink">{order.customer.name}</span>
+                <span className="text-ink">{order.customerSnapshot?.name || 'Guest'}</span>
               </p>
-              <p>{order.customer.email}</p>
-              <p>{order.customer.phone}</p>
+              <p>{order.customerSnapshot?.email}</p>
+              <p>{order.customerSnapshot?.phone}</p>
               <p className="pt-2">
-                {order.address}
+                {order.shippingAddress?.address}
                 <br />
-                {order.area}, {order.city}
+                {order.shippingAddress?.area}, {order.shippingAddress?.city}
               </p>
-              {order.notes ? <p className="pt-2">Notes: {order.notes}</p> : null}
+              {order.shippingAddress?.notes ? (
+                <p className="pt-2">Notes: {order.shippingAddress.notes}</p>
+              ) : null}
               <p className="pt-2">Payment: {order.paymentMethod}</p>
             </div>
           </Card>
@@ -217,18 +267,37 @@ export function OrderDetailsPage() {
 }
 
 export function CustomersPage() {
-  const customers = useAdminDataStore((s) => s.customers)
+  const [customers, setCustomers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
-  const filtered = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(query.toLowerCase()) ||
-      c.email.toLowerCase().includes(query.toLowerCase()) ||
-      c.city.toLowerCase().includes(query.toLowerCase()),
-  )
+
+  useEffect(() => {
+    customersApi
+      .list()
+      .then(({ data }) => setCustomers(data.data || []))
+      .catch((error) => toast.error(getErrorMessage(error, 'Failed to load customers')))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase()
+    return customers.filter(
+      (c) =>
+        String(c.name || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(c.email || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(c.phone || '')
+          .toLowerCase()
+          .includes(q),
+    )
+  }, [customers, query])
 
   return (
     <div>
-      <PageHeader title="Customers" description="Customer list from mock storefront activity." />
+      <PageHeader title="Customers" description="Accounts created on the storefront." />
       <Card>
         <div className="mb-4">
           <Input
@@ -237,29 +306,31 @@ export function CustomersPage() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <Table headers={['Customer', 'Contact', 'Orders', 'Spent', 'Status']}>
-          {filtered.map((customer) => (
-            <tr key={customer.id} className="border-b border-line last:border-0">
-              <td className="px-3 py-3">
-                <p className="font-medium">{customer.name}</p>
-                <p className="text-xs text-muted">Joined {formatDate(customer.joined)}</p>
-              </td>
-              <td className="px-3 py-3">
-                {customer.email}
-                <p className="text-xs text-muted">
-                  {customer.phone} · {customer.city}
-                </p>
-              </td>
-              <td className="px-3 py-3">{customer.orders}</td>
-              <td className="px-3 py-3">{formatPrice(customer.spent)}</td>
-              <td className="px-3 py-3">
-                <Badge tone={customer.status === 'active' ? 'success' : 'neutral'}>
-                  {customer.status}
-                </Badge>
-              </td>
-            </tr>
-          ))}
-        </Table>
+        {loading ? (
+          <p className="py-8 text-sm text-muted">Loading customers…</p>
+        ) : filtered.length ? (
+          <Table headers={['Customer', 'Contact', 'Status']}>
+            {filtered.map((customer) => (
+              <tr key={customer.id || customer._id} className="border-b border-line last:border-0">
+                <td className="px-3 py-3">
+                  <p className="font-medium">{customer.name}</p>
+                  <p className="text-xs text-muted">Joined {formatDate(customer.createdAt)}</p>
+                </td>
+                <td className="px-3 py-3">
+                  {customer.email}
+                  <p className="text-xs text-muted">{customer.phone || '—'}</p>
+                </td>
+                <td className="px-3 py-3">
+                  <Badge tone={customer.isActive !== false ? 'success' : 'neutral'}>
+                    {customer.isActive !== false ? 'active' : 'disabled'}
+                  </Badge>
+                </td>
+              </tr>
+            ))}
+          </Table>
+        ) : (
+          <EmptyRow message="No customers yet." />
+        )}
       </Card>
     </div>
   )
