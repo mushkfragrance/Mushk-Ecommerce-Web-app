@@ -22,23 +22,25 @@ export default function HeroSection({ homepage }) {
   const ctaSecondaryHref = homepage?.ctaSecondaryHref || defaultCopy.ctaSecondaryHref
 
   return (
-    <section className="relative min-h-[78dvh] overflow-hidden bg-ink md:min-h-[88vh]">
-      {image ? (
-        <img
-          src={image}
-          alt="Mushk Fragrance hero"
-          className="absolute inset-0 h-full w-full object-cover object-center"
-          width={1920}
-          height={1080}
-          fetchPriority="high"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-charcoal" aria-hidden="true" />
-      )}
-      <div className="absolute inset-0 bg-ink/60 md:bg-ink/55" />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/45 to-ink/55" />
+    <section className="relative bg-ink">
+      <div className="absolute inset-0 overflow-hidden">
+        {image ? (
+          <img
+            src={image}
+            alt=""
+            className="h-full w-full object-cover object-center"
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+          />
+        ) : (
+          <div className="h-full w-full bg-charcoal" aria-hidden="true" />
+        )}
+        <div className="absolute inset-0 bg-ink/60 md:bg-ink/55" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/45 to-ink/55" aria-hidden="true" />
+      </div>
 
-      <div className="container-site section-pad relative flex min-h-[78dvh] items-center justify-center py-16 pb-safe md:min-h-[88vh] md:py-20">
+      <div className="container-site section-pad relative flex min-h-[calc(100dvh-8.5rem)] flex-col items-center justify-start pt-8 pb-14 sm:min-h-[calc(100dvh-9rem)] sm:pt-10 sm:pb-16 md:min-h-[calc(100dvh-8rem)] md:justify-start md:pt-12 md:pb-16 lg:pt-16">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
@@ -56,7 +58,7 @@ export default function HeroSection({ homepage }) {
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted sm:mt-5 sm:text-base md:text-lg">
             {subtitle}
           </p>
-          <div className="mt-7 flex w-full max-w-md flex-col gap-3 sm:mt-8 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
+          <div className="mt-5 flex w-full max-w-md flex-col gap-3 sm:mt-6 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
             <Button to={ctaPrimaryHref} size="lg" className="w-full sm:w-auto">
               {ctaPrimaryLabel}
             </Button>
@@ -69,7 +71,7 @@ export default function HeroSection({ homepage }) {
               {ctaSecondaryLabel}
             </Button>
           </div>
-          <p className="mt-8 text-[10px] uppercase tracking-[0.28em] text-gold">Follow Mushk</p>
+          <p className="mt-5 text-[10px] uppercase tracking-[0.28em] text-gold sm:mt-6">Follow Mushk</p>
           <SocialLinks tone="hero" className="mt-3" />
         </motion.div>
       </div>
