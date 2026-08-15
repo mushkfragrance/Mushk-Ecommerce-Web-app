@@ -9,14 +9,13 @@ import { faqs } from '../data/content'
 import { policies } from '../data/policies'
 import { brand } from '../lib/brand'
 import { storeApi, getErrorMessage } from '../lib/services'
-import { useStoreSettings } from '../hooks/useStoreSettings'
 
 export function AboutPage() {
   return (
     <>
       <Seo
         title="About Mushk Fragrance"
-        description="Mushk Fragrance is a Pakistani perfume house from Lahore. Learn about our official eau de parfum for him, her, and unisex."
+        description="Mushk Fragrance is a Pakistani perfume house from Karachi. Learn about our official eau de parfum for him, her, and unisex."
         path="/about"
       />
       <PageHero
@@ -41,7 +40,7 @@ export function AboutPage() {
             you can explore before you commit.
           </p>
           <p>
-            From Lahore to the rest of Pakistan, we ship with care — Cash on Delivery available, and
+            From Karachi to the rest of Pakistan, we ship with care — Cash on Delivery available, and
             complimentary shipping on qualifying orders.
           </p>
           <Button to="/shop" className="mt-4">
@@ -56,11 +55,9 @@ export function AboutPage() {
 export function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [submitting, setSubmitting] = useState(false)
-  const { settings } = useStoreSettings()
-  const email = settings?.email || brand.contact.email
-  const phone = settings?.phone || brand.contact.phone
-  const whatsapp = settings?.whatsapp || brand.contact.whatsapp
-  const address = settings?.address || brand.contact.address
+  const email = brand.contact.email
+  const phone = brand.contact.phone
+  const address = brand.contact.address
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -143,7 +140,17 @@ export function ContactPage() {
                 {phone}
               </a>
             </li>
-            <li>WhatsApp: {whatsapp}</li>
+            <li>
+              WhatsApp:{' '}
+              <a
+                href={brand.contact.whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold hover:text-gold-bright"
+              >
+                Chat with Mushk Fragrance
+              </a>
+            </li>
             <li>Location: {address}</li>
           </ul>
         </div>

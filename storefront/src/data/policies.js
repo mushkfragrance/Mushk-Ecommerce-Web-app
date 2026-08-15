@@ -61,7 +61,7 @@ export const policies = {
       },
       {
         heading: 'Your choices',
-        body: 'You may request access, correction, or deletion of your personal information by contacting hello@mushkfragrance.com.',
+        body: 'You may request access, correction, or deletion of your personal information by contacting mushkfragrance@gmail.com.',
       },
     ],
   },

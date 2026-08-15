@@ -168,7 +168,7 @@ export function organizationJsonLd() {
     telephone: brand.contact.phone,
     address: {
       '@type': 'PostalAddress',
-      addressLocality: 'Lahore',
+      addressLocality: 'Karachi',
       addressCountry: 'PK',
     },
     areaServed: {

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { brand } from '../../lib/brand'
 import { storeApi } from '../../lib/services'
-import { useStoreSettings } from '../../hooks/useStoreSettings'
 import SocialLinks from './SocialLinks'
 
 const helpLinks = [
@@ -15,10 +14,9 @@ const helpLinks = [
 ]
 
 export default function Footer() {
-  const { settings } = useStoreSettings()
-  const email = settings?.email || brand.contact.email
-  const phone = settings?.phone || brand.contact.phone
-  const address = settings?.address || brand.contact.address
+  const email = brand.contact.email
+  const phone = brand.contact.phone
+  const address = brand.contact.address
   const [shopLinks, setShopLinks] = useState([
     { to: '/shop', label: 'Shop All' },
     { to: '/shop/best-sellers', label: 'Best Sellers' },
@@ -100,7 +98,12 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href={`tel:${phone.replace(/\s/g, '')}`} className="hover:text-gold-bright">
+              <a
+                href={brand.contact.whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gold-bright"
+              >
                 {phone}
               </a>
             </li>

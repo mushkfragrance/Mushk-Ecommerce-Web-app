@@ -4,6 +4,7 @@ import AnnouncementBar from '../components/layout/AnnouncementBar'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import ScrollToTop from '../components/layout/ScrollToTop'
+import FloatingWhatsApp from '../components/layout/FloatingWhatsApp'
 
 export default function MainLayout() {
   return (
@@ -15,6 +16,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <Footer />
+      <FloatingWhatsApp />
       <Toaster
         position="top-center"
         containerStyle={{

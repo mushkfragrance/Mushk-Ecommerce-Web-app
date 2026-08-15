@@ -5,15 +5,16 @@ export const brand = {
   shortName: 'MUSHK',
   tagline: 'Scented in silence. Remembered forever.',
   description:
-    'Mushk Fragrance is a Pakistani perfume house. Shop official Mushk Fragrance eau de parfum for him, her, and unisex — lasting trails, COD nationwide, from Lahore.',
+    'Mushk Fragrance is a Pakistani perfume house. Shop official Mushk Fragrance eau de parfum for him, her, and unisex — lasting trails, COD nationwide, from Karachi.',
   logo,
   currency: 'PKR',
   currencySymbol: 'Rs.',
   contact: {
-    email: 'hello@mushkfragrance.com',
-    phone: '+92 300 1234567',
-    whatsapp: '+923001234567',
-    address: 'Lahore, Pakistan',
+    email: 'mushkfragrance@gmail.com',
+    phone: '+92 305 2297701',
+    whatsapp: '+923052297701',
+    whatsappLink: 'https://wa.me/message/53SUII5ZCHLAK1',
+    address: 'Karachi, Pakistan',
   },
   socials: {
     instagram: 'https://www.instagram.com/_mushk_fragrance_/',
