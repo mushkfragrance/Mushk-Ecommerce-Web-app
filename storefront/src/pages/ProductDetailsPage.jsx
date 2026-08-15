@@ -152,8 +152,12 @@ export default function ProductDetailsPage() {
   return (
     <div className="container-site section-pad pb-sticky-cta py-8 sm:py-10 md:py-14">
       <Seo
-        title={product.name}
-        description={product.shortDescription || product.description}
+        title={`${product.name} Perfume by Mushk Fragrance`}
+        description={
+          product.shortDescription ||
+          product.description ||
+          `Buy ${product.name} by Mushk Fragrance — official perfume store in Pakistan.`
+        }
         path={`/product/${product.slug}`}
         image={product.images?.[0]}
         type="product"

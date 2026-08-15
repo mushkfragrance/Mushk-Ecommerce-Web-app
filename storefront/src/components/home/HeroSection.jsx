@@ -2,9 +2,9 @@ import { motion } from 'framer-motion'
 import Button from '../ui/Button'
 
 const defaultCopy = {
-  title: 'Crafted for lasting presence',
+  title: 'Mushk Fragrance',
   subtitle:
-    'Discover the Mushk Fragrance collection — refined perfume oils and eau de parfum in black and gold.',
+    'Official Mushk Fragrance store — premium perfumes for him, her, and unisex. Lasting eau de parfum, Cash on Delivery across Pakistan.',
   ctaPrimaryLabel: 'Shop All',
   ctaPrimaryHref: '/shop',
   ctaSecondaryLabel: 'New Arrivals',
@@ -45,8 +45,13 @@ export default function HeroSection({ homepage }) {
           className="mx-auto flex w-full max-w-3xl flex-col items-center px-1 text-center"
         >
           <h1 className="font-display text-[1.85rem] leading-tight text-gold text-balance xs:text-3xl sm:text-4xl md:text-6xl">
-            {title}
+            Mushk Fragrance
           </h1>
+          {title && title.toLowerCase() !== 'mushk fragrance' ? (
+            <p className="mt-3 font-display text-xl leading-snug text-ivory sm:text-2xl md:text-3xl">
+              {title}
+            </p>
+          ) : null}
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted sm:mt-5 sm:text-base md:text-lg">
             {subtitle}
           </p>

@@ -2,6 +2,9 @@
 User-agent: *
 Allow: /
 
+User-agent: Googlebot
+Allow: /
+
 # Disallow account / checkout flows from indexing
 Disallow: /cart
 Disallow: /checkout
@@ -10,6 +13,8 @@ Disallow: /account
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /wishlist
+Disallow: /search
 
 Sitemap: https://www.mushkfragrance.com/sitemap.xml

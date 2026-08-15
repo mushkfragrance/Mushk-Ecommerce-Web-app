@@ -17,7 +17,7 @@ export default function ProductGallery({ images = [], name }) {
       >
         <img
           src={images[active]}
-          alt={`${name} — view ${active + 1}`}
+          alt={`${name} by Mushk Fragrance`}
           className="h-full w-full object-cover object-center"
           width={800}
           height={1000}

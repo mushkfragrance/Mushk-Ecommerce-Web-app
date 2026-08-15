@@ -32,7 +32,7 @@ export default function ProductCard({ product, onQuickView }) {
         {!imgLoaded ? <div className="absolute inset-0 animate-pulse bg-elevated" /> : null}
         <img
           src={product.images[0]}
-          alt={product.name}
+          alt={`${product.name} by Mushk Fragrance`}
           loading="lazy"
           width={600}
           height={750}

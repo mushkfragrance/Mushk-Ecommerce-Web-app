@@ -5,6 +5,7 @@ import Breadcrumbs from '../components/ui/Breadcrumbs'
 import ProductGrid from '../components/product/ProductGrid'
 import QuickViewModal from '../components/product/QuickViewModal'
 import Pagination from '../components/ui/Pagination'
+import Seo from '../components/seo/Seo'
 import { useProducts } from '../hooks/useCatalog'
 
 export default function SearchPage() {
@@ -26,6 +27,12 @@ export default function SearchPage() {
 
   return (
     <>
+      <Seo
+        title={q ? `Search: ${q}` : 'Search'}
+        description="Search Mushk Fragrance perfumes by name, notes, or family."
+        path={q ? `/search?q=${encodeURIComponent(q)}` : '/search'}
+        noindex
+      />
       <PageHero
         eyebrow="Search"
         title={q ? `Results for “${q}”` : 'Search'}

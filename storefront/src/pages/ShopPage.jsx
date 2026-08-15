@@ -15,38 +15,42 @@ import { filterProducts, paginate } from '../data/catalog'
 
 const collectionMeta = {
   all: {
-    title: 'All Perfumes',
-    description: 'Explore the complete Mushk Fragrance collection.',
+    title: 'Shop Mushk Fragrance Perfumes',
+    description:
+      'Shop the official Mushk Fragrance collection — premium perfumes for him, her, and unisex, with Cash on Delivery in Pakistan.',
     filters: {},
   },
   men: {
-    title: 'For Him',
-    description: 'Woody, oriental, and aromatic compositions for presence.',
+    title: 'Mushk Fragrance for Him',
+    description:
+      'Shop Mushk Fragrance perfumes for him — woody, oriental, and aromatic compositions made for lasting presence.',
     filters: { gender: 'men', category: 'men' },
   },
   women: {
-    title: 'For Her',
-    description: 'Floral, musky, and soft oriental trails with lasting elegance.',
+    title: 'Mushk Fragrance for Her',
+    description:
+      'Shop Mushk Fragrance perfumes for her — floral, musky, and soft oriental trails with lasting elegance.',
     filters: { gender: 'women', category: 'women' },
   },
   unisex: {
-    title: 'Unisex',
-    description: 'Shared signatures — clean, resinous, and quietly powerful.',
+    title: 'Unisex Mushk Fragrance Perfumes',
+    description:
+      'Shop unisex Mushk Fragrance perfumes — shared signatures that are clean, resinous, and quietly powerful.',
     filters: { gender: 'unisex', category: 'unisex' },
   },
   'new-arrivals': {
-    title: 'New Arrivals',
-    description: 'The latest bottles added to the Mushk Fragrance library.',
+    title: 'New Mushk Fragrance Arrivals',
+    description: 'The latest Mushk Fragrance perfumes added to the collection.',
     filters: { collection: 'new' },
   },
   'best-sellers': {
-    title: 'Best Sellers',
-    description: 'Customer favorites with proven trails and loyalty.',
+    title: 'Mushk Fragrance Best Sellers',
+    description: 'Best-selling Mushk Fragrance perfumes — customer favorites with lasting trails.',
     filters: { collection: 'best' },
   },
   sale: {
-    title: 'Sale',
-    description: 'Selected bottles with seasonal reductions.',
+    title: 'Mushk Fragrance Sale',
+    description: 'Selected Mushk Fragrance bottles with seasonal reductions.',
     filters: { collection: 'sale' },
   },
 }

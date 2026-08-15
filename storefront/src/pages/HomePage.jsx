@@ -6,7 +6,7 @@ import WhyChooseUs from '../components/home/WhyChooseUs'
 import ReviewsSection from '../components/home/ReviewsSection'
 import NewsletterSection from '../components/home/NewsletterSection'
 import QuickViewModal from '../components/product/QuickViewModal'
-import Seo, { organizationJsonLd } from '../components/seo/Seo'
+import Seo, { homeJsonLd } from '../components/seo/Seo'
 import { brand } from '../lib/brand'
 import { useHomepageMedia } from '../hooks/useCatalog'
 
@@ -17,10 +17,11 @@ export default function HomePage() {
   return (
     <>
       <Seo
+        title="Mushk Fragrance | Premium Perfumes in Pakistan"
         description={brand.description}
         path="/"
-        jsonLd={organizationJsonLd()}
-        jsonLdId="org-jsonld"
+        jsonLd={homeJsonLd()}
+        jsonLdId="home-jsonld"
       />
       <HeroSection homepage={homepage} />
       <CategoriesSection homepage={homepage} categories={categories} />

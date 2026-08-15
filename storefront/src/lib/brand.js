@@ -5,7 +5,7 @@ export const brand = {
   shortName: 'MUSHK',
   tagline: 'Scented in silence. Remembered forever.',
   description:
-    'Mushk Fragrance crafts refined perfume oils and eau de parfum for those who prefer presence over noise — deep notes, lasting trails, and bottles made for ritual.',
+    'Mushk Fragrance is a Pakistani perfume house. Shop official Mushk Fragrance eau de parfum for him, her, and unisex — lasting trails, COD nationwide, from Lahore.',
   logo,
   currency: 'PKR',
   currencySymbol: 'Rs.',

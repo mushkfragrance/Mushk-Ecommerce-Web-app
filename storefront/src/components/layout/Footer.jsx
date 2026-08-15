@@ -80,7 +80,9 @@ export default function Footer() {
               <p className="text-[10px] uppercase tracking-[0.3em] text-muted">Fragrance</p>
             </div>
           </Link>
-          <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">{brand.tagline}</p>
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
+            Mushk Fragrance — official perfume store in Pakistan. {brand.tagline}
+          </p>
           <div className="mt-5 flex gap-2">
             <a
               href={brand.socials.instagram}

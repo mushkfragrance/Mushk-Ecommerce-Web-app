@@ -1,7 +1,10 @@
 import { useEffect } from 'react'
 import { brand } from '../../lib/brand'
 
-const SITE_URL = import.meta.env.VITE_STOREFRONT_URL || 'https://www.mushkfragrance.com'
+export const SITE_URL = (import.meta.env.VITE_STOREFRONT_URL || 'https://www.mushkfragrance.com').replace(
+  /\/$/,
+  '',
+)
 
 function upsertMeta(attr, key, content) {
   if (!content) return
@@ -40,6 +43,12 @@ function upsertJsonLd(id, data) {
   el.textContent = JSON.stringify(data)
 }
 
+function pageTitle(title) {
+  if (!title) return `${brand.name} | Premium Perfumes in Pakistan`
+  if (title.includes(brand.name)) return title
+  return `${title} | ${brand.name}`
+}
+
 /**
  * Sets document title, description, Open Graph / Twitter tags, canonical, and optional JSON-LD.
  */
@@ -53,21 +62,29 @@ export default function Seo({
   jsonLd,
   jsonLdId = 'page-jsonld',
 }) {
-  const fullTitle = title ? `${title} | ${brand.name}` : `${brand.name} | Premium Perfumes`
-  const url = `${SITE_URL.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
-  const ogImage = image || `${SITE_URL.replace(/\/$/, '')}/og-default.jpg`
+  const fullTitle = pageTitle(title)
+  const url = `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`
+  const ogImage = image && /^https?:\/\//i.test(image) ? image : `${SITE_URL}${image || '/og-default.jpg'}`
 
   useEffect(() => {
     document.title = fullTitle
     upsertMeta('name', 'description', description)
-    upsertMeta('name', 'robots', noindex ? 'noindex, nofollow' : 'index, follow')
+    upsertMeta(
+      'name',
+      'robots',
+      noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large',
+    )
+    upsertMeta('name', 'author', brand.name)
+    upsertMeta('name', 'application-name', brand.name)
 
     upsertMeta('property', 'og:title', fullTitle)
     upsertMeta('property', 'og:description', description)
     upsertMeta('property', 'og:type', type)
     upsertMeta('property', 'og:url', url)
     upsertMeta('property', 'og:image', ogImage)
+    upsertMeta('property', 'og:image:alt', `${brand.name} — premium perfumes`)
     upsertMeta('property', 'og:site_name', brand.name)
+    upsertMeta('property', 'og:locale', 'en_PK')
 
     upsertMeta('name', 'twitter:card', 'summary_large_image')
     upsertMeta('name', 'twitter:title', fullTitle)
@@ -87,50 +104,120 @@ export default function Seo({
 
 export function buildProductJsonLd(product, variantPrice) {
   if (!product) return null
-  const url = `${SITE_URL.replace(/\/$/, '')}/product/${product.slug}`
-  return {
+  const url = `${SITE_URL}/product/${product.slug}`
+  const data = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: product.name,
+    name: `${product.name} by ${brand.name}`,
     description: product.shortDescription || product.description || brand.description,
     image: product.images?.length ? product.images : undefined,
     brand: {
       '@type': 'Brand',
-      name: product.brand || brand.name,
+      name: brand.name,
     },
-    sku: product.slug,
+    manufacturer: {
+      '@type': 'Organization',
+      name: brand.name,
+    },
+    sku: product.sku || product.slug,
+    category: 'Perfume',
+    url,
     offers: {
       '@type': 'Offer',
       url,
       priceCurrency: brand.currency,
       price: String(variantPrice ?? 0),
-      availability:
-        product.variants?.some((v) => v.stock > 0)
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
+      availability: product.variants?.some((v) => v.stock > 0)
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
       seller: {
         '@type': 'Organization',
         name: brand.name,
       },
     },
   }
+
+  if (product.reviewCount > 0 && product.rating > 0) {
+    data.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: String(product.rating),
+      reviewCount: String(product.reviewCount),
+      bestRating: '5',
+      worstRating: '1',
+    }
+  }
+
+  return data
 }
 
 export function organizationJsonLd() {
   return {
-    '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': `${SITE_URL}/#organization`,
     name: brand.name,
+    alternateName: ['Mushk', 'Mushk Fragrance Pakistan', 'Mushk Perfumes'],
     url: SITE_URL,
-    logo: `${SITE_URL.replace(/\/$/, '')}/favicon.jpeg`,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/favicon.jpeg`,
+    },
+    image: `${SITE_URL}/og-default.jpg`,
     description: brand.description,
     email: brand.contact.email,
     telephone: brand.contact.phone,
     address: {
       '@type': 'PostalAddress',
-      addressLocality: brand.contact.address,
+      addressLocality: 'Lahore',
       addressCountry: 'PK',
     },
+    areaServed: {
+      '@type': 'Country',
+      name: 'Pakistan',
+    },
     sameAs: Object.values(brand.socials).filter(Boolean),
+  }
+}
+
+export function websiteJsonLd() {
+  return {
+    '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
+    name: brand.name,
+    alternateName: ['Mushk', 'Mushk Fragrance'],
+    url: SITE_URL,
+    inLanguage: 'en-PK',
+    publisher: { '@id': `${SITE_URL}/#organization` },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+}
+
+export function homeJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [organizationJsonLd(), websiteJsonLd()],
+  }
+}
+
+export function faqJsonLd(items = []) {
+  if (!items.length) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
   }
 }

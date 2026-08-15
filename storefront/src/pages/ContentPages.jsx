@@ -4,7 +4,7 @@ import PageHero from '../components/ui/PageHero'
 import Breadcrumbs from '../components/ui/Breadcrumbs'
 import Button from '../components/ui/Button'
 import Input, { TextArea } from '../components/ui/Input'
-import Seo from '../components/seo/Seo'
+import Seo, { faqJsonLd } from '../components/seo/Seo'
 import { faqs } from '../data/content'
 import { policies } from '../data/policies'
 import { brand } from '../lib/brand'
@@ -14,7 +14,11 @@ import { useStoreSettings } from '../hooks/useStoreSettings'
 export function AboutPage() {
   return (
     <>
-      <Seo title="About" description={brand.description} path="/about" />
+      <Seo
+        title="About Mushk Fragrance"
+        description="Mushk Fragrance is a Pakistani perfume house from Lahore. Learn about our official eau de parfum for him, her, and unisex."
+        path="/about"
+      />
       <PageHero
         eyebrow="Brand"
         title="About Mushk Fragrance"
@@ -79,7 +83,7 @@ export function ContactPage() {
   return (
     <>
       <Seo
-        title="Contact"
+        title="Contact Mushk Fragrance"
         description="Contact Mushk Fragrance about orders, fragrance notes, or wholesale."
         path="/contact"
       />
@@ -154,9 +158,11 @@ export function FaqPage() {
   return (
     <>
       <Seo
-        title="FAQ"
+        title="Mushk Fragrance FAQ"
         description="Answers about Mushk Fragrance delivery, longevity, returns, and authenticity."
         path="/faq"
+        jsonLd={faqJsonLd(faqs)}
+        jsonLdId="faq-jsonld"
       />
       <PageHero
         eyebrow="Help"

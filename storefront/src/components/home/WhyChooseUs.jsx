@@ -30,8 +30,8 @@ export default function WhyChooseUs() {
     <section className="border-y border-border bg-charcoal/60">
       <div className="container-site section-pad py-12 sm:py-16 md:py-20">
         <SectionHeader
-          title="Why choose us"
-          description="A premium fragrance house focused on craft, clarity, and customer trust."
+          title="Why choose Mushk Fragrance"
+          description="A Pakistani perfume house focused on craft, lasting presence, and customer trust."
           align="center"
         />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
