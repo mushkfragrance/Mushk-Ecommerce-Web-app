@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import Button from '../ui/Button'
+import SocialLinks from '../layout/SocialLinks'
 
 const defaultCopy = {
   title: 'Mushk Fragrance',
@@ -68,6 +69,8 @@ export default function HeroSection({ homepage }) {
               {ctaSecondaryLabel}
             </Button>
           </div>
+          <p className="mt-8 text-[10px] uppercase tracking-[0.28em] text-gold">Follow Mushk</p>
+          <SocialLinks tone="hero" className="mt-3" />
         </motion.div>
       </div>
     </section>

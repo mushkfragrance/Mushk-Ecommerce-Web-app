@@ -1,30 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Music2 } from 'lucide-react'
 import { brand } from '../../lib/brand'
 import { storeApi } from '../../lib/services'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
-
-function InstagramIcon({ size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
-    </svg>
-  )
-}
-
-function FacebookIcon({ size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H9v3h2v7h3v-7h2.5l.5-3H14V9z"
-        fill="currentColor"
-      />
-    </svg>
-  )
-}
+import SocialLinks from './SocialLinks'
 
 const helpLinks = [
   { to: '/faq', label: 'FAQs' },
@@ -83,35 +62,7 @@ export default function Footer() {
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
             Mushk Fragrance — official perfume store in Pakistan. {brand.tagline}
           </p>
-          <div className="mt-5 flex gap-2">
-            <a
-              href={brand.socials.instagram}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Instagram"
-              className="touch-target inline-flex items-center justify-center border border-border text-muted hover:border-gold hover:text-gold"
-            >
-              <InstagramIcon />
-            </a>
-            <a
-              href={brand.socials.facebook}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Facebook"
-              className="touch-target inline-flex items-center justify-center border border-border text-muted hover:border-gold hover:text-gold"
-            >
-              <FacebookIcon />
-            </a>
-            <a
-              href={brand.socials.tiktok}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="TikTok"
-              className="touch-target inline-flex items-center justify-center border border-border text-muted hover:border-gold hover:text-gold"
-            >
-              <Music2 size={16} />
-            </a>
-          </div>
+          <SocialLinks tone="footer" className="mt-5 justify-start" />
         </div>
 
         <div>

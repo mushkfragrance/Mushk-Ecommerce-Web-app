@@ -16,9 +16,9 @@ export const brand = {
     address: 'Lahore, Pakistan',
   },
   socials: {
-    instagram: 'https://instagram.com/mushkfragrance',
-    facebook: 'https://facebook.com/mushkfragrance',
-    tiktok: 'https://tiktok.com/@mushkfragrance',
+    instagram: 'https://www.instagram.com/_mushk_fragrance_/',
+    facebook: 'https://www.facebook.com/people/Mushk-Fragrance/61591970994099/',
+    tiktok: 'https://www.tiktok.com/@mushk_fragrance',
   },
   announcement:
     'Complimentary shipping on orders above Rs. 8,000 · COD available nationwide',

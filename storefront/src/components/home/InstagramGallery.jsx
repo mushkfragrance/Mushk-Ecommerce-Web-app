@@ -10,7 +10,7 @@ export default function InstagramGallery() {
         eyebrow="Gallery"
         title="On the feed"
         description="A glimpse of the Mushk Fragrance world — bottles, rituals, and evening light."
-        action={{ href: brand.socials.instagram, label: '@mushkfragrance' }}
+        action={{ href: brand.socials.instagram, label: '@_mushk_fragrance_' }}
       />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         {galleryImages.map((image, index) => (
