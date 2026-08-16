@@ -135,6 +135,11 @@ const newsletterSchema = z.object({
   email: z.string().email(),
 });
 
+const orderTrackSchema = z.object({
+  orderNumber: z.string().min(3).max(24),
+  phone: z.string().min(10).max(20),
+});
+
 module.exports = {
   productSchema,
   categorySchema,
@@ -147,4 +152,5 @@ module.exports = {
   bannerSchema,
   contactSchema,
   newsletterSchema,
+  orderTrackSchema,
 };

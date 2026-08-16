@@ -15,6 +15,7 @@ export const storeApi = {
   reviews: (params) => api.get('/reviews', { params }),
   validateCoupon: (payload) => api.post('/coupons/validate', payload),
   placeOrder: (payload) => api.post('/orders', payload),
+  trackOrder: (payload) => api.post('/orders/track', payload),
   newsletter: (email) => api.post('/newsletter', { email }),
   contact: (payload) => api.post('/contact', payload),
 }

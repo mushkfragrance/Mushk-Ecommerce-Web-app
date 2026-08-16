@@ -12,6 +12,7 @@ const SearchPage = lazy(() => import('./pages/SearchPage'))
 const CartPage = lazy(() => import('./pages/CartPage'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'))
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'))
 const WishlistPage = lazy(() => import('./pages/WishlistPage'))
 
 const LoginPage = lazyNamed(() => import('./pages/AuthPages'), 'LoginPage')
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
             <Route path="order-success" element={<OrderSuccessPage />} />
+            <Route path="track-order" element={<TrackOrderPage />} />
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />

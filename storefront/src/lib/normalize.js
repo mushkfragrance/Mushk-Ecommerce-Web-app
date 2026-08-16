@@ -39,6 +39,7 @@ export function normalizeOrder(order) {
     subtotal: order.subtotal,
     discount: order.discount,
     shipping: order.shipping,
+    statusHistory: order.statusHistory || [],
     items: (order.items || []).map((item) => ({
       name: item.name,
       size: item.size,

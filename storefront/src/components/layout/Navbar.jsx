@@ -192,6 +192,13 @@ export default function Navbar() {
               </NavLink>
             ))}
             <NavLink
+              to="/track-order"
+              onClick={() => setMobileOpen(false)}
+              className="border-b border-border py-4 text-sm uppercase tracking-[0.18em] text-muted active:text-gold"
+            >
+              Track order
+            </NavLink>
+            <NavLink
               to={user ? '/account' : '/login'}
               onClick={() => setMobileOpen(false)}
               className="border-b border-border py-4 text-sm uppercase tracking-[0.18em] text-muted active:text-gold"

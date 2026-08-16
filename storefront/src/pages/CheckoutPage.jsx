@@ -147,6 +147,7 @@ export default function CheckoutPage() {
           paymentStatus: order.paymentStatus,
           paymentMethod: order.paymentMethod,
           total: order.total,
+          phone: form.phone,
           shippingAddress: {
             area: order.shippingAddress.area,
             city: order.shippingAddress.city,

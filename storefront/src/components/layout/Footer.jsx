@@ -5,6 +5,7 @@ import { storeApi } from '../../lib/services'
 import SocialLinks from './SocialLinks'
 
 const helpLinks = [
+  { to: '/track-order', label: 'Track Order' },
   { to: '/faq', label: 'FAQs' },
   { to: '/shipping', label: 'Shipping & Delivery' },
   { to: '/returns', label: 'Returns & Exchanges' },

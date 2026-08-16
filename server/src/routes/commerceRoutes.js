@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const commerceController = require('../controllers/commerceController');
 const { validate } = require('../middleware/validate');
 const {
@@ -7,17 +8,32 @@ const {
   paymentStatusSchema,
   couponSchema,
   reviewSchema,
+  orderTrackSchema,
 } = require('../validators/resourceValidators');
 const { protect, requireAdmin, requireCustomer, optionalAuth } = require('../middleware/auth');
 const { z } = require('zod');
 
 const router = express.Router();
 
+const trackLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many tracking attempts, try again later' },
+});
+
 router.post(
   '/orders',
   optionalAuth,
   validate(orderCreateSchema),
   commerceController.placeOrder,
+);
+router.post(
+  '/orders/track',
+  trackLimiter,
+  validate(orderTrackSchema),
+  commerceController.trackCustomerOrder,
 );
 router.post(
   '/coupons/validate',

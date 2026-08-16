@@ -56,4 +56,10 @@ export const faqs = [
     answer:
       'Yes. All products sold on this storefront are original Mushk Fragrance creations. We do not sell grey-market or third-party fillers.',
   },
+  {
+    id: 'f7',
+    question: 'How do I track my order?',
+    answer:
+      'Open Track Order, enter your order number (for example MF-001) and the phone number used at checkout. The page shows whether the order is confirmed, shipped, or delivered as soon as the team updates it.',
+  },
 ]

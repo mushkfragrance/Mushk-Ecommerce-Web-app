@@ -11,6 +11,7 @@ import { normalizeOrder } from '../lib/normalize'
 import { customerAuthApi, getErrorMessage } from '../lib/services'
 import { useAuthStore } from '../store'
 import { Package } from 'lucide-react'
+import OrderStatusTracker from '../components/order/OrderStatusTracker'
 
 function useMyOrders() {
   const [orders, setOrders] = useState([])
@@ -71,6 +72,9 @@ function AccountNav({ active }) {
           className={active === 'orders' ? 'block text-gold-bright' : 'block text-muted hover:text-gold-bright'}
         >
           Order history
+        </Link>
+        <Link to="/track-order" className="block text-muted hover:text-gold-bright">
+          Track order
         </Link>
         <Link to="/wishlist" className="block text-muted hover:text-gold-bright">
           Wishlist
@@ -164,7 +168,7 @@ export function OrdersPage() {
       <PageHero
         eyebrow="Orders"
         title="Order history"
-        description="Orders placed while you were signed in."
+        description="Live status for orders placed with this email — including guest checkout."
         crumbs={
           <Breadcrumbs
             items={[
@@ -203,7 +207,7 @@ export function OrdersPage() {
           <EmptyState
             icon={Package}
             title="No orders yet"
-            description="When you place an order while signed in, it will appear here."
+            description="When you place an order with this email, it will appear here."
             actionLabel="Shop now"
             actionTo="/shop"
           />
@@ -284,6 +288,9 @@ export function OrderDetailsPage() {
               <Badge tone="ivory">Payment: {order.paymentStatus}</Badge>
             </div>
             <p className="mt-3">{order.paymentMethod}</p>
+            <div className="mt-5">
+              <OrderStatusTracker status={order.status} history={order.statusHistory} />
+            </div>
           </div>
           <div>
             <h3 className="text-ivory">Shipping address</h3>

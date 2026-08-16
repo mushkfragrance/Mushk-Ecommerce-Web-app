@@ -17,7 +17,7 @@ export const policies = {
       },
       {
         heading: 'Order tracking',
-        body: 'Once your order is shipped, tracking details will be shared by SMS or email.',
+        body: 'Use Track Order on the website with your order number (for example MF-001) and the phone number from checkout. Status updates to Confirmed, Shipped, and Delivered as soon as the team updates your order.',
       },
     ],
   },

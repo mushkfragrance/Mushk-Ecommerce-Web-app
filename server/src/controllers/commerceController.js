@@ -7,7 +7,7 @@ const { asyncHandler } = require('../utils/asyncHandler');
 const { sendSuccess } = require('../utils/ApiResponse');
 const { ApiError } = require('../utils/ApiError');
 const { getPagination } = require('../utils/query');
-const { createOrder, updateOrderStatus, validateCoupon } = require('../services/orderService');
+const { createOrder, updateOrderStatus, validateCoupon, trackOrder } = require('../services/orderService');
 const { getOrderSummary } = require('../services/analyticsService');
 const { logActivity } = require('../utils/activity');
 
@@ -30,6 +30,11 @@ const validateCouponCode = asyncHandler(async (req, res) => {
       freeShipping: result.freeShipping,
     },
   });
+});
+
+const trackCustomerOrder = asyncHandler(async (req, res) => {
+  const order = await trackOrder(req.body.orderNumber, req.body.phone);
+  sendSuccess(res, { data: order });
 });
 
 const listOrders = asyncHandler(async (req, res) => {
@@ -62,7 +67,14 @@ const getOrder = asyncHandler(async (req, res) => {
 });
 
 const myOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ customer: req.user._id }).sort({ createdAt: -1 });
+  const email = String(req.user.email || '').toLowerCase();
+  await Order.updateMany(
+    { customer: null, 'customerSnapshot.email': email },
+    { $set: { customer: req.user._id } },
+  );
+  const orders = await Order.find({
+    $or: [{ customer: req.user._id }, { 'customerSnapshot.email': email }],
+  }).sort({ createdAt: -1 });
   sendSuccess(res, { data: orders });
 });
 
@@ -198,6 +210,7 @@ const moderateReview = asyncHandler(async (req, res) => {
 module.exports = {
   placeOrder,
   validateCouponCode,
+  trackCustomerOrder,
   listOrders,
   getOrder,
   myOrders,

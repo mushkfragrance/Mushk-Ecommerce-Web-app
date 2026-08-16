@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
 const Order = require('../models/Order');
+const Customer = require('../models/Customer');
 const StoreSetting = require('../models/StoreSetting');
 const { ApiError } = require('../utils/ApiError');
 
@@ -139,15 +140,22 @@ async function createOrder(payload, customerId = null) {
     const discount = couponResult.discount;
     const total = Math.max(0, subtotal - discount + shipping);
     const orderNumber = await nextOrderNumber(session);
+    let linkedCustomer = customerId;
+    if (!linkedCustomer && payload.customer?.email) {
+      const existing = await Customer.findOne({
+        email: String(payload.customer.email).toLowerCase(),
+      }).session(session);
+      if (existing) linkedCustomer = existing._id;
+    }
 
     const [order] = await Order.create(
       [
         {
           orderNumber,
-          customer: customerId,
+          customer: linkedCustomer,
           customerSnapshot: {
             ...payload.customer,
-            guest: Boolean(payload.guest) || !customerId,
+            guest: Boolean(payload.guest) || !linkedCustomer,
           },
           items: lineItems,
           status: 'Pending',
@@ -237,9 +245,60 @@ async function updateOrderStatus(orderId, status, note = '') {
   return order;
 }
 
+function phoneDigits(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('92') && digits.length >= 12) return digits.slice(2);
+  if (digits.startsWith('0') && digits.length >= 11) return digits.slice(1);
+  return digits;
+}
+
+function publicOrderView(order) {
+  return {
+    orderNumber: order.orderNumber,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
+    createdAt: order.createdAt,
+    total: order.total,
+    items: (order.items || []).map((item) => ({
+      name: item.name,
+      size: item.size,
+      qty: item.qty,
+    })),
+    shippingAddress: {
+      city: order.shippingAddress?.city || '',
+      area: order.shippingAddress?.area || '',
+    },
+    statusHistory: (order.statusHistory || []).map((entry) => ({
+      status: entry.status,
+      note: entry.note || '',
+      at: entry.at,
+    })),
+  };
+}
+
+async function trackOrder(orderNumber, phone) {
+  const code = String(orderNumber || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, '');
+  const wanted = phoneDigits(phone);
+  if (!code || wanted.length < 10) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  const order = await Order.findOne({ orderNumber: code });
+  if (!order || phoneDigits(order.customerSnapshot?.phone) !== wanted) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  return publicOrderView(order);
+}
+
 module.exports = {
   getSettings,
   validateCoupon,
   createOrder,
   updateOrderStatus,
+  trackOrder,
 };
