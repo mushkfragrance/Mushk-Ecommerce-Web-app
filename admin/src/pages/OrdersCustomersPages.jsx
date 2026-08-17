@@ -35,23 +35,29 @@ function whatsappDigits(phone) {
   return digits
 }
 
-function confirmationWhatsApp(order) {
+function statusWhatsApp(order) {
   const name = String(order.customerSnapshot?.name || 'Customer').trim() || 'Customer'
   const orderNo = order.orderNumber || ''
-  const message = `Dear ${name}, Thanks for placing order from Mushk Fragrance. Your Order No ${orderNo} is Confirmed.`
+  const status = order.status
+  const lines = {
+    Confirmed: `Dear ${name}, Thanks for placing order from Mushk Fragrance. Your Order No ${orderNo} is Confirmed.`,
+    Shipped: `Dear ${name}, Thanks for placing order from Mushk Fragrance. Your Order No ${orderNo} is Shipped.`,
+    Delivered: `Dear ${name}, Thanks for placing order from Mushk Fragrance. Your Order No ${orderNo} is Delivered.`,
+  }
+  const message = lines[status] || ''
   const phone = whatsappDigits(order.customerSnapshot?.phone)
-  const href = phone
-    ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
-    : ''
-  return { message, href, phone }
+  const href =
+    message && phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : ''
+  return { message, href, phone, status }
 }
 
-function WhatsAppConfirmCard({ order }) {
-  const { message, href, phone } = confirmationWhatsApp(order)
+function WhatsAppStatusCard({ order }) {
+  const { message, href, phone, status } = statusWhatsApp(order)
+  if (!message) return null
 
   return (
     <div className="rounded-md border border-gold/30 bg-gold/5 p-3">
-      <p className="text-sm font-medium text-ink">WhatsApp customer</p>
+      <p className="text-sm font-medium text-ink">WhatsApp customer — {status}</p>
       <p className="mt-2 whitespace-pre-wrap rounded-md border border-line bg-white p-3 text-sm text-slate">
         {message}
       </p>
@@ -182,7 +188,9 @@ export function OrderDetailsPage() {
       const { data } = await ordersApi.updateStatus(id, { status })
       setOrder(data.data)
       toast.success(
-        status === 'Confirmed' ? 'Order confirmed — WhatsApp message is ready' : 'Order status updated',
+        ['Confirmed', 'Shipped', 'Delivered'].includes(status)
+          ? `Order ${status.toLowerCase()} — WhatsApp message is ready`
+          : 'Order status updated',
       )
     } catch (error) {
       toast.error(getErrorMessage(error, 'Could not update order status'))
@@ -296,9 +304,7 @@ export function OrderDetailsPage() {
               <p className="text-xs text-muted">
                 Order status and payment status are kept separate on purpose.
               </p>
-              {order.status === 'Confirmed' ? (
-                <WhatsAppConfirmCard order={order} />
-              ) : null}
+              <WhatsAppStatusCard order={order} />
             </div>
           </Card>
           <Card title="Customer & shipping">
