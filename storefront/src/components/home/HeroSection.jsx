@@ -1,5 +1,6 @@
 import Button from '../ui/Button'
 import SocialLinks from '../layout/SocialLinks'
+import Typewriter from '../ui/Typewriter'
 import { cloudinarySrcSet, cloudinaryUrl } from '../../lib/cloudinary'
 
 const defaultCopy = {
@@ -53,9 +54,10 @@ export default function HeroSection({ homepage }) {
               {title}
             </p>
           ) : null}
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted sm:mt-5 sm:text-base md:text-lg">
-            {subtitle}
-          </p>
+          <Typewriter
+            text={subtitle}
+            className="mt-4 max-w-xl text-sm leading-relaxed text-muted sm:mt-5 sm:text-base md:text-lg"
+          />
           <div className="mt-5 flex w-full max-w-md flex-col gap-3 sm:mt-6 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
             <Button to={ctaPrimaryHref} size="lg" className="w-full sm:w-auto">
               {ctaPrimaryLabel}
