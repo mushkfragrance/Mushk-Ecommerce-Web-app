@@ -26,6 +26,52 @@ function orderId(order) {
   return order._id || order.id
 }
 
+function whatsappDigits(phone) {
+  const digits = String(phone || '').replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('92') && digits.length >= 12) return digits
+  if (digits.startsWith('0') && digits.length >= 11) return `92${digits.slice(1)}`
+  if (digits.length === 10 && digits.startsWith('3')) return `92${digits}`
+  return digits
+}
+
+function confirmationWhatsApp(order) {
+  const name = String(order.customerSnapshot?.name || 'Customer').trim() || 'Customer'
+  const orderNo = order.orderNumber || ''
+  const message = `Dear ${name}, Thanks for placing order from Mushk Fragrance. Your Order No ${orderNo} is Confirmed.`
+  const phone = whatsappDigits(order.customerSnapshot?.phone)
+  const href = phone
+    ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    : ''
+  return { message, href, phone }
+}
+
+function WhatsAppConfirmCard({ order }) {
+  const { message, href, phone } = confirmationWhatsApp(order)
+
+  return (
+    <div className="rounded-md border border-gold/30 bg-gold/5 p-3">
+      <p className="text-sm font-medium text-ink">WhatsApp customer</p>
+      <p className="mt-2 whitespace-pre-wrap rounded-md border border-line bg-white p-3 text-sm text-slate">
+        {message}
+      </p>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:bg-[#1ebe5d]"
+        >
+          Send on WhatsApp
+        </a>
+      ) : (
+        <p className="mt-2 text-xs text-danger">This order has no phone number for WhatsApp.</p>
+      )}
+      {phone ? <p className="mt-2 text-xs text-muted">Opens wa.me/{phone}</p> : null}
+    </div>
+  )
+}
+
 export function OrdersPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -135,7 +181,9 @@ export function OrderDetailsPage() {
     try {
       const { data } = await ordersApi.updateStatus(id, { status })
       setOrder(data.data)
-      toast.success('Order status updated')
+      toast.success(
+        status === 'Confirmed' ? 'Order confirmed — WhatsApp message is ready' : 'Order status updated',
+      )
     } catch (error) {
       toast.error(getErrorMessage(error, 'Could not update order status'))
     }
@@ -248,6 +296,9 @@ export function OrderDetailsPage() {
               <p className="text-xs text-muted">
                 Order status and payment status are kept separate on purpose.
               </p>
+              {order.status === 'Confirmed' ? (
+                <WhatsAppConfirmCard order={order} />
+              ) : null}
             </div>
           </Card>
           <Card title="Customer & shipping">
